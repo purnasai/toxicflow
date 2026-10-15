@@ -1,0 +1,13 @@
+# A personal browser assistant that fills web forms from local notes.
+# Its one job needs untrusted pages, private files and an outbound channel in the same agent,
+# so no configuration change can make it safe without breaking the job. Only the runtime gate helps.
+name: assistant
+description: One browser agent that fills web forms using local notes.
+agents:
+  - id: assistant
+    purpose: Fill in web forms using details from the user's local notes.
+    mounts:
+      - {server: puppeteer}
+      - {server: filesystem, tools: [read_text_file, list_directory]}
+tasks:
+  - {id: fill-forms, agent: assistant, needs: [filesystem.read_text_file, puppeteer.puppeteer_navigate, puppeteer.puppeteer_fill]}

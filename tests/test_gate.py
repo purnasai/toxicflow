@@ -29,7 +29,9 @@ def test_injection_chain_is_blocked_with_path(loaded):
         ("researcher", "fetch.fetch"),
     ])
     assert d[1].status == "ALLOW_TAINTED"
-    assert d[2].status == "BLOCK" and d[2].path == ["triage", "coder", "triage"]
+    assert d[2].status == "BLOCK"
+    assert d[2].routes == {"untrusted": ["triage"], "private": ["coder", "triage"], "out": ["triage"]}
+    assert d[2].path == ["triage", "coder", "triage"]
     assert d[3].status == "BLOCK" and d[3].path[-1] == "researcher"
 
 
@@ -77,3 +79,13 @@ def test_unlabelled_sink_fails_closed(loaded):
         ("helper", "everything.trigger-long-running-operation"),
     ])
     assert d[2].status == "BLOCK_UNKNOWN"
+
+
+def test_single_agent_web_injection_is_blocked(loaded):
+    _, g = loaded("assistant")
+    d = run(g, [
+        ("assistant", "puppeteer.puppeteer_evaluate"),
+        ("assistant", "filesystem.read_text_file"),
+        ("assistant", "puppeteer.puppeteer_navigate"),
+    ])
+    assert [x.status for x in d] == ["ALLOW", "ALLOW_TAINTED", "BLOCK"]

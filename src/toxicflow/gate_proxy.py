@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 from contextlib import AsyncExitStack
 
 import anyio
@@ -183,50 +182,73 @@ async def _replay(scenario: str, attack: dict, session: str, svc: ToxicFlowServi
     return rows
 
 
-def replay(scenario: str, attack_name: str, after_repair: bool = False, use_gate: bool = True) -> int:
+def run_replay(scenario: str, attack_name: str, mode: str = "gate", graph_name: str | None = None) -> dict:
+    """mode: 'nogate' (baseline), 'gate', or 'after' (cheapest repair applied first, gate on).
+    Returns plain data; the CLI and the UI render it."""
+    if mode not in ("nogate", "gate", "after"):
+        raise ValueError("mode must be nogate, gate or after")
     seed_sandbox()
     attack = yaml.safe_load((DATA / "attacks" / f"{attack_name}.yaml").read_text())
-    svc = ToxicFlowService(scenario, reload=True)
-    label = "before repair"
-    if after_repair:
+    svc = ToxicFlowService(scenario, reload=True, graph_name=graph_name)
+    repair = []
+    if mode == "after":
         from .repair import apply_repair, search
 
-        best = search(svc.db, svc.g)[0][0]
-        apply_repair(svc.db, svc.g, best.actions)
-        label = "after repair: " + "; ".join(a.describe() for a in best.actions)
-    if not use_gate:
-        label += ", gate disabled"
-    session = f"{attack_name}-{'after' if after_repair else 'before'}{'' if use_gate else '-nogate'}"
-    rows = anyio.run(_replay, scenario, attack, session, svc, use_gate)
+        solutions = search(svc.db, svc.g)[0]
+        if solutions:
+            apply_repair(svc.db, svc.g, solutions[0].actions)
+            repair = [a.describe() for a in solutions[0].actions]
+    session = f"{attack_name}-{mode}"
+    rows = anyio.run(_replay, scenario, attack, session, svc, mode != "nogate")
 
+    sinks = {r[0] for r in svc.g.ro_query("MATCH (t:Tool)-[:HAS_CAP]->(:Capability {name: 'exfil_sink'}) RETURN t.id").result_set}
+    secret = attack.get("secret", "\0")
+    steps = []
+    for (seq, agent, tool, note, d, result), step in zip(rows, attack["steps"]):
+        leaked = d.allowed and tool in sinks and secret in json.dumps(step.get("args", {}))
+        steps.append(
+            {
+                "seq": seq, "agent": agent, "tool": tool, "note": note, "status": d.status,
+                "reason": d.reason, "path": d.path, "result": _short(result, 300), "leaked": leaked,
+            }
+        )
+    return {
+        "title": attack.get("title", attack_name),
+        "mode": mode,
+        "repair": repair,
+        "session": session,
+        "graph": svc.g.name,
+        "steps": steps,
+        "blocked": sum(r[4].decision == "block" for r in rows),
+        "unreachable": sum(r[4].status == "UNREACHABLE" for r in rows),
+        "leaked_via": [x["tool"] for x in steps if x["leaked"]],
+    }
+
+
+def replay(scenario: str, attack_name: str, after_repair: bool = False, use_gate: bool = True) -> int:
+    mode = "after" if after_repair else ("gate" if use_gate else "nogate")
+    r = run_replay(scenario, attack_name, mode)
+    label = {"nogate": "gate disabled", "gate": "gate on"}.get(mode) or "after repair: " + "; ".join(r["repair"])
     out = Console()
-    t = Table(title=f"{attack.get('title', attack_name)} ({label})", show_lines=True)
+    t = Table(title=f"{r['title']} ({label})", show_lines=True)
     for col in ("#", "agent", "tool", "step", "gate", "reason / result"):
         t.add_column(col, overflow="fold")
     colour = {"ALLOW": "green", "ALLOW_TAINTED": "yellow", "BLOCK": "red", "BLOCK_UNKNOWN": "red", "DENY_NOT_MOUNTED": "red", "UNREACHABLE": "cyan"}
-    for seq, agent, tool, note, d, result in rows:
-        detail = d.reason if d.status != "ALLOW" else _short(result)
-        if d.path:
-            detail += f"\npath: {' -> '.join(d.path)}"
-        t.add_row(str(seq), agent, tool, note, f"[{colour[d.status]}]{d.status}[/]", detail)
+    for x in r["steps"]:
+        detail = x["reason"] if x["status"] != "ALLOW" else _short(x["result"])
+        if x["path"]:
+            detail += f"\npath: {' -> '.join(x['path'])}"
+        t.add_row(str(x["seq"]), x["agent"], x["tool"], x["note"], f"[{colour[x['status']]}]{x['status']}[/]", detail)
     out.print(t)
-    blocked = sum(r[4].decision == "block" for r in rows)
-    unreachable = sum(r[4].status == "UNREACHABLE" for r in rows)
-    out.print(f"{blocked} call(s) blocked, {unreachable} step(s) impossible. Session '{session}' recorded in graph {svc.g.name}.")
-    sinks = {r[0] for r in svc.g.ro_query("MATCH (t:Tool)-[:HAS_CAP]->(:Capability {name: 'exfil_sink'}) RETURN t.id").result_set}
-    secret = attack.get("secret", "\0")
-    leaked = [r[2] for r, step in zip(rows, attack["steps"]) if r[4].allowed and r[2] in sinks and secret in json.dumps(step.get("args", {}))]
-    if leaked:
-        out.print(f"[red]Secret left through: {leaked}[/red]")
+    out.print(f"{r['blocked']} call(s) blocked, {r['unreachable']} step(s) impossible. Session '{r['session']}' recorded in graph {r['graph']}.")
+    if r["leaked_via"]:
+        out.print(f"[red]Secret left through: {r['leaked_via']}[/red]")
     else:
         out.print("[green]The secret did not leave through any outbound tool.[/green]")
-    return 1 if leaked else 0
+    return 1 if r["leaked_via"] else 0
 
 
 def _short(text: str, n: int = 140) -> str:
     text = " ".join(str(text).split())
     return text if len(text) <= n else text[: n - 1] + "…"
 
-
-def which(cmd: str) -> bool:
-    return shutil.which(cmd) is not None

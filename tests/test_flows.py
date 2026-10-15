@@ -5,7 +5,7 @@ from toxicflow.analyze import broken_tasks, flows, one_hop_findings
 from toxicflow.repair import Action, apply_repair, search
 
 
-@pytest.mark.parametrize("name", ["acme", "github_solo", "unlabelled"])
+@pytest.mark.parametrize("name", ["acme", "github_solo", "unlabelled", "analytics", "assistant"])
 def test_graph_matches_reference(loaded, name):
     sc, g = loaded(name)
     strict = {f.key for f in flows(g) if f.status == "TOXIC"}
@@ -59,3 +59,21 @@ def test_simulation_leaves_base_graph_untouched(db, loaded):
     search(db, g)
     assert len(flows(g)) == before
     assert not [n for n in db.list_graphs() if "__sim_" in n]
+
+
+def test_private_read_need_not_be_steered(db, loaded):
+    """analytics: SQL reads customer data legitimately; it meets injected search results in the
+    analyst. Quarantining only the web agent leaves the SQL data reaching the web agent's sink."""
+    _, g = loaded("analytics")
+    assert one_hop_findings(g) == []
+    solutions, rejected = search(db, g)
+    assert [s.actions for s in solutions] == [(Action("quarantine", "analyst", "sql"),)]
+    web_only = next(t for t in rejected if t.actions == (Action("quarantine", "analyst", "web"),))
+    assert web_only.remaining and not web_only.broken
+
+
+def test_no_safe_configuration_is_reported_honestly(db, loaded):
+    _, g = loaded("assistant")
+    solutions, rejected = search(db, g)
+    assert solutions == []
+    assert rejected and all(t.broken for t in rejected)

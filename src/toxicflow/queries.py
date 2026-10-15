@@ -16,6 +16,7 @@ Derived influence edges (rebuilt by REBUILD_* after every change):
 (:Agent)-[:WRITES_TO]->(:Store)-[:FEEDS]->(:Agent)  shared state through one server instance
 
 Content an agent has seen can reach every agent downstream of it on influence edges.
+A toxic flow needs untrusted content and private data to meet in one agent that can reach a sink.
 """
 
 INFLUENCE = "INSTRUCTS|REPORTS_TO|WRITES_TO|FEEDS"
@@ -58,33 +59,41 @@ RETURN a.id AS agent, collect(DISTINCT c.name) AS caps
 ORDER BY agent
 """
 
-# Toxic flow: untrusted content enters at a1, steers a2 into reading private data,
-# and that data reaches a3, which can send it out. a1, a2, a3 may coincide.
+# Toxic flow: untrusted content enters at a1, private data is read at a2, both reach a
+# meeting agent m (the model holding both in context), and m can reach a3, which can send
+# data out. The private read does not need to be steered: a legitimate read whose result
+# meets injected instructions is enough. Any of a1, a2, m, a3 may coincide.
 # $untrusted / $private / $sink are lists so the same query also finds flows that
 # rely on unlabelled tools (pass ['x', 'unknown']).
 TOXIC_FLOWS = f"""
-MATCH (a1:Agent)-[:CAN_CALL]->(u:Tool)-[:HAS_CAP]->(cu:Capability)
-WHERE cu.name IN $untrusted
-MATCH p1 = (a1)-[:{INFLUENCE}*0..{MAX_HOPS}]->(a2:Agent)
-MATCH (a2)-[:CAN_CALL]->(r:Tool)-[:HAS_CAP]->(cr:Capability)
-WHERE cr.name IN $private
-MATCH p2 = (a2)-[:{INFLUENCE}*0..{MAX_HOPS}]->(a3:Agent)
-MATCH (a3)-[:CAN_CALL]->(s:Tool)-[:HAS_CAP]->(cs:Capability)
-WHERE cs.name IN $sink
-WITH a1, a2, a3, u, r, s, p1, p2, length(p1) + length(p2) AS hops
-ORDER BY hops
-WITH a1, a2, a3,
-     collect(DISTINCT u.id) AS sources,
-     collect(DISTINCT r.id) AS readers,
-     collect(DISTINCT s.id) AS sinks,
-     head(collect([n IN nodes(p1) | n.id])) AS path_in,
-     head(collect([n IN nodes(p2) | n.id])) AS path_out,
-     head(collect([e IN relationships(p1) | type(e)])) AS rels_in,
-     head(collect([e IN relationships(p2) | type(e)])) AS rels_out,
-     min(hops) AS hops
-RETURN a1.id AS entry, a2.id AS reader, a3.id AS exit,
-       sources, readers, sinks, path_in, path_out, rels_in, rels_out, hops
-ORDER BY hops, entry, reader, exit
+MATCH (a1:Agent)-[:CAN_CALL]->(:Tool)-[:HAS_CAP]->(c1:Capability)
+WHERE c1.name IN $untrusted
+WITH DISTINCT a1
+MATCH (a1)-[:{INFLUENCE}*0..{MAX_HOPS}]->(m:Agent)
+WITH DISTINCT a1, m
+MATCH (a2:Agent)-[:{INFLUENCE}*0..{MAX_HOPS}]->(m)
+WITH DISTINCT a1, m, a2
+WHERE size([(a2)-[:CAN_CALL]->(:Tool)-[:HAS_CAP]->(c:Capability) WHERE c.name IN $private | 1]) > 0
+MATCH (m)-[:{INFLUENCE}*0..{MAX_HOPS}]->(a3:Agent)
+WITH DISTINCT a1, m, a2, a3
+WHERE size([(a3)-[:CAN_CALL]->(:Tool)-[:HAS_CAP]->(c:Capability) WHERE c.name IN $sink | 1]) > 0
+RETURN a1.id AS entry, a2.id AS reader, a3.id AS exit, collect(m.id) AS meets
+ORDER BY entry, reader, exit
+"""
+
+# Shortest influence path between two agents (the witness shown to people and used for repair).
+WITNESS = f"""
+MATCH p = (a:Agent {{id: $src}})-[:{INFLUENCE}*0..{MAX_HOPS}]->(b:Agent {{id: $dst}})
+RETURN [n IN nodes(p) | n.id], [e IN relationships(p) | type(e)]
+ORDER BY length(p)
+LIMIT 1
+"""
+
+# Tools an agent holds for a set of capabilities.
+TOOLS_WITH_CAPS = """
+MATCH (:Agent {id: $agent})-[:CAN_CALL]->(t:Tool)-[:HAS_CAP]->(c:Capability)
+WHERE c.name IN $caps
+RETURN collect(DISTINCT t.id)
 """
 
 # A task works if its assigned agent can reach each needed tool itself or by delegating.

@@ -36,12 +36,12 @@ def _flow_dict(f: Flow) -> dict:
 
 
 class ToxicFlowService:
-    def __init__(self, scenario: str, db: FalkorDB | None = None, reload: bool = False):
+    def __init__(self, scenario: str, db: FalkorDB | None = None, reload: bool = False, graph_name: str | None = None):
         self.db = db or connect()
         self.scenario = scenario
-        name = f"toxicflow_{scenario}"
+        name = graph_name or f"toxicflow_{scenario}"
         if reload or name not in self.db.list_graphs():
-            self.g: Graph = load(self.db, load_scenario_file(scenario))
+            self.g: Graph = load(self.db, load_scenario_file(scenario), graph_name=name)
         else:
             self.g = self.db.select_graph(name)
 

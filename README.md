@@ -56,6 +56,30 @@ MATCH (a3)-[:CAN_CALL]->(:Tool)-[:HAS_CAP]->(cs:Capability) WHERE cs.name IN $si
 RETURN ...  -- entry, reader, exit agents + the witness paths
 ```
 
+## What counts as a toxic flow (and what this does not model)
+
+A flow is toxic when four conditions hold. The agents involved may coincide:
+1. untrusted content enters at agent `a1`;
+2. private data is read at agent `a2`;
+3. both can reach a common agent `m` along influence edges, so one model has both in context;
+4. `m` can reach an agent `a3` that holds an outbound tool.
+
+The private read does **not** need to be steered. A legitimate read whose result meets injected text is enough. An earlier version of this project required the injection to reach the reader first. The `analytics` scenario showed that this missed real leaks, and the reference oracle and tests were updated with the fix.
+
+Influence edges and their meaning:
+- **`INSTRUCTS`**: a parent writes its child's task, so anything the parent has seen can shape the child.
+- **`REPORTS_TO`**: a child returns free text to its parent. A delegation with `returns: structured` has no such edge. This assumes the child returns only schema-constrained values: IDs, counts, enums, booleans. If the schema includes the sensitive fields themselves, quarantine does not help, and that is on the person defining the schema.
+- **`WRITES_TO` / `FEEDS`**: agents that mount the same server instance share state through it.
+
+Labels are per tool, conservative, and written by hand with a reason each. Unlabelled tools are `unknown`. Static flows that rely on them are UNKNOWN, and the runtime gate fails closed on them.
+
+Not modelled:
+- argument-level permissions, for example a filesystem root that excludes `.env`;
+- OAuth scopes;
+- per-message content.
+
+A reported path is evidence that the leak *can* happen, not proof that it will.
+
 ## How the repair works
 
 1. Each remaining flow yields the interventions that would break its path:

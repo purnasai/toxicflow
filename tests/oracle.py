@@ -1,4 +1,5 @@
-"""Reference implementation of the flow semantics in plain Python, written separately
+"""Reference implementation of the flow semantics in plain Python (untrusted and private
+meet in some agent m that reaches a sink), written separately
 from the Cypher so the two can check each other. Works on the scenario dict + labels only."""
 
 from __future__ import annotations
@@ -61,10 +62,11 @@ def toxic_triples(scenario: dict, include_unknown: bool = False) -> set[tuple[st
     for a1 in caps:
         if not has(a1, "untrusted_input"):
             continue
-        for a2 in reach(edges, a1):
+        for a2 in caps:
             if not has(a2, "private_read"):
                 continue
-            for a3 in reach(edges, a2):
-                if has(a3, "exfil_sink"):
-                    out.add((a1, a2, a3))
+            for m in reach(edges, a1) & reach(edges, a2):
+                for a3 in reach(edges, m):
+                    if has(a3, "exfil_sink"):
+                        out.add((a1, a2, a3))
     return out
