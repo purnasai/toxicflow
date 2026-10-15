@@ -114,3 +114,52 @@ def unknown_tool_ids(g: Graph) -> list[str]:
 
 def broken_tasks(g: Graph) -> dict[str, list[str]]:
     return {task: missing for task, missing in g.ro_query(Q.TASK_STATUS).result_set if missing}
+
+
+# ---------------------------------------------------------------- BFS-based analysis (scales to large setups)
+
+
+@dataclass
+class Summary:
+    toxic: bool
+    meeting_points: list[str]
+    triples: set[tuple[str, str, str]]
+    toxic_alone: list[str]  # agents holding all three capabilities themselves
+
+    @property
+    def hidden(self) -> bool:
+        """Toxic, yet no single agent looks toxic on its own."""
+        return self.toxic and not self.toxic_alone
+
+
+def reach_sets(g: Graph, depth: int = Q.MAX_HOPS) -> dict[str, set[str]]:
+    caps = one_hop(g)
+    out = {a: {a} for a in caps}
+    for agent, reached in g.ro_query(Q.REACH, {"depth": depth}).result_set:
+        out[agent] |= set(reached)
+    return out
+
+
+def summarize(g: Graph, include_unknown: bool = False, max_triples: int = 200_000) -> Summary:
+    """Same semantics as TOXIC_FLOWS (untrusted and private meet in m, m reaches a sink),
+    computed from one BFS per agent instead of path enumeration."""
+    caps = one_hop(g)
+    reach = reach_sets(g)
+
+    def has(agent: str, cap: str) -> bool:
+        return cap in caps[agent] or (include_unknown and "unknown" in caps[agent])
+
+    U = [a for a in caps if has(a, "untrusted_input")]
+    P = [a for a in caps if has(a, "private_read")]
+    S = {a for a in caps if has(a, "exfil_sink")}
+    meets, triples = [], set()
+    for m in caps:
+        us = [a for a in U if m in reach[a]]
+        ps = [a for a in P if m in reach[a]]
+        ss = reach[m] & S
+        if us and ps and ss:
+            meets.append(m)
+            if len(triples) < max_triples:
+                triples |= {(a1, a2, a3) for a1 in us for a2 in ps for a3 in ss}
+    alone = [a for a in caps if all(c in caps[a] for c in ("untrusted_input", "private_read", "exfil_sink"))]
+    return Summary(bool(meets), sorted(meets), triples, alone)

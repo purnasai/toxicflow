@@ -104,3 +104,21 @@ servers:
       caps: [none]
       why: "Test fixtures."
     # The remaining 'everything' tools are deliberately left unlabelled -> unknown.
+  playwright:
+    - match: "^browser_(navigate|navigate_back|click|type|fill_form|select_option|press_key|evaluate|run_code_unsafe|file_upload|drop|drag|handle_dialog)$"
+      caps: [untrusted_input, exfil_sink]
+      why: "Drives a real browser: loads third-party pages and can send data through URLs, forms and uploads."
+    - match: "^browser_(snapshot|take_screenshot|console_messages|network_requests|network_request|find|tabs|wait_for|hover)$"
+      caps: [untrusted_input]
+      why: "Returns page content authored by third parties."
+    - match: "^browser_(close|resize|emulate_media)$"
+      caps: [none]
+      why: "Browser housekeeping."
+  context7:
+    - match: ".*"
+      caps: [untrusted_input, exfil_sink]
+      why: "Returns third-party library documentation from a hosted service; the query is sent to that service."
+  sequential-thinking:
+    - match: ".*"
+      caps: [none]
+      why: "Local reasoning scratchpad."

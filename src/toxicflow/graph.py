@@ -23,7 +23,7 @@ def load_scenario_file(name: str) -> dict:
 
 
 def rebuild_derived(g: Graph) -> None:
-    for q in (Q.CLEAR_DERIVED, Q.DROP_STORES, Q.REBUILD_DELEGATION, Q.REBUILD_STORE_WRITES, Q.REBUILD_STORE_READS):
+    for q in (Q.CLEAR_DERIVED, Q.DROP_STORES, Q.REBUILD_DELEGATION, Q.REBUILD_STORE_WRITES, Q.REBUILD_STORE_READS, Q.REBUILD_INFLUENCES):
         g.query(q)
 
 

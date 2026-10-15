@@ -1,0 +1,689 @@
+{
+  "tools": 132,
+  "per_capability": {
+    "untrusted_input": {
+      "precision": 0.959,
+      "recall": 0.922,
+      "tp": 47,
+      "fp": 2,
+      "fn": 4
+    },
+    "private_read": {
+      "precision": 0.596,
+      "recall": 0.861,
+      "tp": 31,
+      "fp": 21,
+      "fn": 5
+    },
+    "exfil_sink": {
+      "precision": 0.878,
+      "recall": 0.977,
+      "tp": 43,
+      "fp": 6,
+      "fn": 1
+    },
+    "store_read": {
+      "precision": 0.429,
+      "recall": 1.0,
+      "tp": 15,
+      "fp": 20,
+      "fn": 0
+    },
+    "store_write": {
+      "precision": 0.406,
+      "recall": 1.0,
+      "tp": 13,
+      "fp": 19,
+      "fn": 0
+    }
+  },
+  "confidence": {
+    "high": 100,
+    "medium": 32,
+    "low": 0
+  },
+  "exact_match": 0.523,
+  "kept_after_dropping_low": 132,
+  "disagreements": [
+    {
+      "key": "filesystem::list_allowed_directories",
+      "llm": [
+        "private_read",
+        "store_read"
+      ],
+      "curated": []
+    },
+    {
+      "key": "git::git_add",
+      "llm": [
+        "store_write"
+      ],
+      "curated": []
+    },
+    {
+      "key": "git::git_branch",
+      "llm": [
+        "private_read",
+        "store_read"
+      ],
+      "curated": [
+        "private_read"
+      ]
+    },
+    {
+      "key": "git::git_checkout",
+      "llm": [
+        "store_write"
+      ],
+      "curated": []
+    },
+    {
+      "key": "git::git_commit",
+      "llm": [
+        "store_write"
+      ],
+      "curated": []
+    },
+    {
+      "key": "git::git_create_branch",
+      "llm": [
+        "store_write"
+      ],
+      "curated": []
+    },
+    {
+      "key": "git::git_diff",
+      "llm": [
+        "private_read",
+        "store_read"
+      ],
+      "curated": [
+        "private_read"
+      ]
+    },
+    {
+      "key": "git::git_diff_staged",
+      "llm": [
+        "private_read",
+        "store_read"
+      ],
+      "curated": [
+        "private_read"
+      ]
+    },
+    {
+      "key": "git::git_diff_unstaged",
+      "llm": [
+        "private_read",
+        "store_read"
+      ],
+      "curated": [
+        "private_read"
+      ]
+    },
+    {
+      "key": "git::git_log",
+      "llm": [
+        "private_read",
+        "store_read"
+      ],
+      "curated": [
+        "private_read"
+      ]
+    },
+    {
+      "key": "git::git_reset",
+      "llm": [
+        "store_write"
+      ],
+      "curated": []
+    },
+    {
+      "key": "git::git_show",
+      "llm": [
+        "private_read",
+        "store_read"
+      ],
+      "curated": [
+        "private_read"
+      ]
+    },
+    {
+      "key": "git::git_status",
+      "llm": [
+        "private_read",
+        "store_read"
+      ],
+      "curated": [
+        "private_read"
+      ]
+    },
+    {
+      "key": "github::add_issue_comment",
+      "llm": [
+        "exfil_sink",
+        "store_write"
+      ],
+      "curated": [
+        "exfil_sink"
+      ]
+    },
+    {
+      "key": "github::create_branch",
+      "llm": [
+        "exfil_sink",
+        "store_write"
+      ],
+      "curated": [
+        "exfil_sink"
+      ]
+    },
+    {
+      "key": "github::create_issue",
+      "llm": [
+        "exfil_sink",
+        "store_write"
+      ],
+      "curated": [
+        "exfil_sink"
+      ]
+    },
+    {
+      "key": "github::create_or_update_file",
+      "llm": [
+        "exfil_sink",
+        "store_write"
+      ],
+      "curated": [
+        "exfil_sink"
+      ]
+    },
+    {
+      "key": "github::create_pull_request",
+      "llm": [
+        "exfil_sink",
+        "store_write"
+      ],
+      "curated": [
+        "exfil_sink"
+      ]
+    },
+    {
+      "key": "github::create_pull_request_review",
+      "llm": [
+        "exfil_sink",
+        "store_write"
+      ],
+      "curated": [
+        "exfil_sink"
+      ]
+    },
+    {
+      "key": "github::create_repository",
+      "llm": [
+        "exfil_sink",
+        "store_write"
+      ],
+      "curated": [
+        "exfil_sink"
+      ]
+    },
+    {
+      "key": "github::fork_repository",
+      "llm": [
+        "exfil_sink",
+        "store_write"
+      ],
+      "curated": [
+        "exfil_sink"
+      ]
+    },
+    {
+      "key": "github::get_file_contents",
+      "llm": [
+        "private_read",
+        "store_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "private_read",
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "github::get_issue",
+      "llm": [
+        "private_read",
+        "store_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "github::get_pull_request",
+      "llm": [
+        "private_read",
+        "store_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "github::get_pull_request_comments",
+      "llm": [
+        "private_read",
+        "store_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "github::get_pull_request_files",
+      "llm": [
+        "private_read",
+        "store_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "private_read",
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "github::get_pull_request_reviews",
+      "llm": [
+        "private_read",
+        "store_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "github::get_pull_request_status",
+      "llm": [
+        "private_read",
+        "store_read"
+      ],
+      "curated": [
+        "private_read",
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "github::list_commits",
+      "llm": [
+        "private_read",
+        "store_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "private_read",
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "github::list_issues",
+      "llm": [
+        "private_read",
+        "store_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "github::list_pull_requests",
+      "llm": [
+        "private_read",
+        "store_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "github::merge_pull_request",
+      "llm": [
+        "exfil_sink",
+        "store_write"
+      ],
+      "curated": [
+        "exfil_sink"
+      ]
+    },
+    {
+      "key": "github::push_files",
+      "llm": [
+        "exfil_sink",
+        "store_write"
+      ],
+      "curated": [
+        "exfil_sink"
+      ]
+    },
+    {
+      "key": "github::search_code",
+      "llm": [
+        "exfil_sink",
+        "private_read",
+        "store_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "private_read",
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "github::search_issues",
+      "llm": [
+        "exfil_sink",
+        "private_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "github::search_repositories",
+      "llm": [
+        "exfil_sink",
+        "private_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "private_read",
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "github::search_users",
+      "llm": [
+        "exfil_sink",
+        "untrusted_input"
+      ],
+      "curated": [
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "github::update_issue",
+      "llm": [
+        "exfil_sink",
+        "store_write"
+      ],
+      "curated": [
+        "exfil_sink"
+      ]
+    },
+    {
+      "key": "github::update_pull_request_branch",
+      "llm": [
+        "exfil_sink",
+        "store_write"
+      ],
+      "curated": [
+        "exfil_sink"
+      ]
+    },
+    {
+      "key": "google-maps::maps_place_details",
+      "llm": [
+        "exfil_sink",
+        "untrusted_input"
+      ],
+      "curated": [
+        "exfil_sink"
+      ]
+    },
+    {
+      "key": "google-maps::maps_search_places",
+      "llm": [
+        "exfil_sink",
+        "untrusted_input"
+      ],
+      "curated": [
+        "exfil_sink"
+      ]
+    },
+    {
+      "key": "memory::open_nodes",
+      "llm": [
+        "store_read"
+      ],
+      "curated": [
+        "private_read",
+        "store_read"
+      ]
+    },
+    {
+      "key": "memory::read_graph",
+      "llm": [
+        "store_read"
+      ],
+      "curated": [
+        "private_read",
+        "store_read"
+      ]
+    },
+    {
+      "key": "memory::search_nodes",
+      "llm": [
+        "store_read"
+      ],
+      "curated": [
+        "private_read",
+        "store_read"
+      ]
+    },
+    {
+      "key": "playwright::browser_console_messages",
+      "llm": [
+        "private_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "playwright::browser_evaluate",
+      "llm": [
+        "exfil_sink",
+        "private_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "exfil_sink",
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "playwright::browser_file_upload",
+      "llm": [
+        "exfil_sink"
+      ],
+      "curated": [
+        "exfil_sink",
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "playwright::browser_find",
+      "llm": [
+        "private_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "playwright::browser_navigate",
+      "llm": [
+        "exfil_sink",
+        "private_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "exfil_sink",
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "playwright::browser_navigate_back",
+      "llm": [
+        "private_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "exfil_sink",
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "playwright::browser_network_request",
+      "llm": [
+        "exfil_sink",
+        "untrusted_input"
+      ],
+      "curated": [
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "playwright::browser_network_requests",
+      "llm": [
+        "private_read"
+      ],
+      "curated": [
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "playwright::browser_run_code_unsafe",
+      "llm": [
+        "exfil_sink",
+        "private_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "exfil_sink",
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "playwright::browser_snapshot",
+      "llm": [
+        "private_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "playwright::browser_tabs",
+      "llm": [
+        "private_read"
+      ],
+      "curated": [
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "playwright::browser_take_screenshot",
+      "llm": [
+        "private_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "postgres::query",
+      "llm": [
+        "private_read",
+        "store_read",
+        "store_write"
+      ],
+      "curated": [
+        "private_read"
+      ]
+    },
+    {
+      "key": "puppeteer::puppeteer_evaluate",
+      "llm": [
+        "exfil_sink",
+        "private_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "exfil_sink",
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "puppeteer::puppeteer_navigate",
+      "llm": [
+        "exfil_sink",
+        "private_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "exfil_sink",
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "puppeteer::puppeteer_screenshot",
+      "llm": [
+        "private_read",
+        "untrusted_input"
+      ],
+      "curated": [
+        "untrusted_input"
+      ]
+    },
+    {
+      "key": "slack::slack_add_reaction",
+      "llm": [
+        "exfil_sink",
+        "store_write"
+      ],
+      "curated": []
+    },
+    {
+      "key": "sqlite::describe_table",
+      "llm": [
+        "store_read"
+      ],
+      "curated": [
+        "private_read",
+        "store_read"
+      ]
+    },
+    {
+      "key": "sqlite::list_tables",
+      "llm": [
+        "store_read"
+      ],
+      "curated": [
+        "private_read",
+        "store_read"
+      ]
+    }
+  ]
+}

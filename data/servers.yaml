@@ -62,3 +62,15 @@ servers:
     source: https://github.com/modelcontextprotocol/servers/tree/main/src/everything
     command: npx
     args: ["-y", "@modelcontextprotocol/server-everything"]
+  - id: playwright
+    source: https://github.com/microsoft/playwright-mcp
+    command: npx
+    args: ["-y", "@playwright/mcp@latest"]
+  - id: context7
+    source: https://github.com/upstash/context7
+    command: npx
+    args: ["-y", "@upstash/context7-mcp"]
+  - id: sequential-thinking
+    source: https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-sequential-thinking"]

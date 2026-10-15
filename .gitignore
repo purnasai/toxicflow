@@ -4,3 +4,6 @@ __pycache__/
 .env
 .pytest_cache/
 data/sandbox/
+data/corpus/raw/
+data/corpus/search_hits.jsonl
+data/corpus/repos.jsonl

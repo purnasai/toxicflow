@@ -25,7 +25,7 @@ MAX_HOPS = 8
 # ---------------------------------------------------------------- derived edges
 
 CLEAR_DERIVED = """
-MATCH ()-[e:INSTRUCTS|REPORTS_TO|WRITES_TO|FEEDS]->() DELETE e
+MATCH ()-[e:INSTRUCTS|REPORTS_TO|WRITES_TO|FEEDS|INFLUENCES]->() DELETE e
 """
 
 DROP_STORES = "MATCH (s:Store) DELETE s"
@@ -49,7 +49,21 @@ MERGE (s:Store {id: t.server + '/' + c.instance})
 MERGE (s)-[:FEEDS]->(a)
 """
 
+# One untyped copy of every influence edge, so algo.bfs can follow all of them at once.
+REBUILD_INFLUENCES = """
+MATCH (x)-[:INSTRUCTS|REPORTS_TO|WRITES_TO|FEEDS]->(y)
+MERGE (x)-[:INFLUENCES]->(y)
+"""
+
 # ---------------------------------------------------------------- analysis
+
+# Every agent's reach over influence edges via FalkorDB's BFS (stores are traversed, only
+# agents are returned). Agents with no outgoing edges yield no row; callers add self-reach.
+REACH = """
+MATCH (x:Agent)
+CALL algo.bfs(x, $depth, 'INFLUENCES') YIELD nodes
+RETURN x.id, [n IN nodes WHERE n:Agent | n.id]
+"""
 
 # Baseline a per-agent scanner would give: capabilities each agent holds directly.
 AGENT_CAPS = """

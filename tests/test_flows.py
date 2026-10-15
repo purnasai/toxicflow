@@ -77,3 +77,12 @@ def test_no_safe_configuration_is_reported_honestly(db, loaded):
     solutions, rejected = search(db, g)
     assert solutions == []
     assert rejected and all(t.broken for t in rejected)
+
+
+@pytest.mark.parametrize("name", ["acme", "github_solo", "unlabelled", "analytics", "assistant"])
+def test_bfs_summary_matches_cypher_flows(loaded, name):
+    from toxicflow.analyze import summarize
+
+    _, g = loaded(name)
+    assert summarize(g).triples == {f.key for f in flows(g) if f.status == "TOXIC"}
+    assert summarize(g, include_unknown=True).triples == {f.key for f in flows(g)}
