@@ -177,21 +177,14 @@ Requires Docker, Python 3.12 and [uv](https://docs.astral.sh/uv/). Node.js is ne
 ## Status
 
 Done:
-- harvest, labels, graph loading;
-- one-hop vs multi-hop scan;
-- UNKNOWN handling;
-- repair search on graph copies;
-- apply, verify, memory nodes, patched config;
-- tests.
-
-Also done:
-- MCP server over the query catalogue;
-- LLM investigator with human approval;
-- runtime gate proxy and replay;
-- 16 tests.
-
+- harvest of real MCP tool schemas, capability labels, graph loading;
+- one-hop vs multi-hop scan, UNKNOWN handling;
+- repair search on graph copies; apply, verify, memory nodes, patched config;
+- MCP server over the query catalogue; LLM investigator with human approval;
+- runtime gate proxy and scripted replay;
 - web UI;
-- analytics and assistant scenarios.
+- five scenarios;
+- 21 tests, including a separate reference oracle.
 
 Next:
 - demo video;
