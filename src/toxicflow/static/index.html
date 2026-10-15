@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ToxicFlow</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%23d6453d'/%3E%3C/svg%3E">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.30.2/cytoscape.min.js"></script>
+<style>
+:root {
+  --bg: #f6f7f9; --panel: #ffffff; --ink: #1d2330; --muted: #5d6676; --line: #dde1e7;
+  --accent: #2f5bd3; --untrusted: #d6453d; --private: #7b4fd6; --out: #d98a0b;
+  --ok: #2e8b57; --unknown: #b58900; --chip: #eef1f5;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12151b; --panel: #1a1f27; --ink: #e6e9ef; --muted: #9aa3b2; --line: #2c333e;
+    --accent: #7aa2ff; --untrusted: #ff6b61; --private: #b18cff; --out: #ffb340;
+    --ok: #4cc38a; --unknown: #e0b400; --chip: #242b36;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12151b; --panel: #1a1f27; --ink: #e6e9ef; --muted: #9aa3b2; --line: #2c333e;
+  --accent: #7aa2ff; --untrusted: #ff6b61; --private: #b18cff; --out: #ffb340;
+  --ok: #4cc38a; --unknown: #e0b400; --chip: #242b36;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { display: flex; align-items: center; gap: 16px; padding: 12px 20px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
+header h1 { font-size: 17px; margin: 0; letter-spacing: .2px; }
+header .sub { color: var(--muted); font-size: 13px; }
+select, button { font: inherit; color: var(--ink); background: var(--chip); border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; }
+button { cursor: pointer; }
+button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+nav { display: flex; gap: 6px; margin-left: auto; }
+main { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr); gap: 16px; padding: 16px 20px; height: calc(100vh - 58px); }
+#graphwrap { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; position: relative; min-height: 360px; }
+#cy { position: absolute; inset: 0; }
+#legend { position: absolute; left: 10px; bottom: 8px; font-size: 12px; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; background: var(--panel); padding: 4px 8px; border-radius: 6px; }
+#legend i { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 4px; border-radius: 2px; }
+#graphnote { position: absolute; right: 10px; top: 8px; font-size: 12px; color: var(--muted); background: var(--panel); padding: 2px 6px; border-radius: 6px; }
+#side { overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+h2 { font-size: 15px; margin: 4px 0 8px; }
+h3 { font-size: 13px; margin: 16px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+td, th { padding: 5px 6px; border-bottom: 1px solid var(--line); text-align: left; }
+th { color: var(--muted); font-weight: 600; }
+.chip { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--chip); }
+.TOXIC, .BLOCK, .BLOCK_UNKNOWN, .DENY_NOT_MOUNTED, .bad { color: var(--untrusted); }
+.UNKNOWN, .ALLOW_TAINTED { color: var(--unknown); }
+.ALLOW, .good { color: var(--ok); }
+.UNREACHABLE { color: var(--accent); }
+.card { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin: 6px 0; cursor: pointer; }
+.card:hover, .card.sel { border-color: var(--accent); }
+.route { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+.r-u { color: var(--untrusted); } .r-p { color: var(--private); } .r-o { color: var(--out); }
+.muted { color: var(--muted); }
+.banner { padding: 8px 10px; border-radius: 8px; margin: 8px 0; font-weight: 600; background: var(--chip); }
+.step { display: grid; grid-template-columns: 26px 1fr auto; gap: 6px; align-items: start; }
+@media (max-width: 860px) { main { grid-template-columns: 1fr; height: auto; } #graphwrap { height: 420px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>ToxicFlow</h1>
+  <span class="sub">toxic flows across MCP agents, found and fixed on FalkorDB</span>
+  <select id="scenario" aria-label="Scenario"></select>
+  <nav>
+    <button data-tab="scan" class="on">1 · Scan</button>
+    <button data-tab="repair">2 · Repair</button>
+    <button data-tab="gate">3 · Runtime gate</button>
+  </nav>
+</header>
+<main>
+  <div id="graphwrap">
+    <div id="cy"></div>
+    <div id="graphnote"></div>
+    <div id="legend">
+      <span><i style="background:#8a93a3"></i>instructs</span>
+      <span><i style="background:#8a93a3;opacity:.6"></i>reports (free text)</span>
+      <span><i style="background:#c9832b"></i>shared store</span>
+      <span><i style="background:var(--untrusted)"></i>untrusted route</span>
+      <span><i style="background:var(--private)"></i>private route</span>
+      <span><i style="background:var(--out)"></i>out route</span>
+    </div>
+  </div>
+  <section id="side"></section>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+let cy, state = { scenarios: [], tab: "scan", scan: null, repair: null };
+
+async function api(path) {
+  const r = await fetch(path);
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+function capBadges(caps) {
+  return [["untrusted_input", "U"], ["private_read", "P"], ["exfil_sink", "S"]].filter(([c]) => caps.includes(c)).map(([, l]) => l).join(" ");
+}
+
+function drawGraph(graph, removed = [], ghosts = []) {
+  const els = [];
+  for (const n of graph.nodes) {
+    els.push({ data: { id: n.id, label: n.kind === "agent" ? `${n.id}\n${capBadges(n.caps) || "–"}` : n.id, kind: n.kind, purpose: n.purpose } });
+  }
+  for (const n of ghosts) {
+    if (!graph.nodes.some((m) => m.id === n.id)) els.push({ data: { id: n.id, label: n.id, kind: n.kind, purpose: "removed by the repair" }, classes: "removed" });
+  }
+  graph = { nodes: graph.nodes.concat(ghosts.filter((n) => !graph.nodes.some((m) => m.id === n.id))), edges: graph.edges };
+  graph.edges.forEach((e, i) => els.push({ data: { id: `e${i}`, source: e.source, target: e.target, type: e.type } }));
+  removed.forEach((e, i) => {
+    if (graph.nodes.some((n) => n.id === e.source) && graph.nodes.some((n) => n.id === e.target))
+      els.push({ data: { id: `r${i}`, source: e.source, target: e.target, type: e.type }, classes: "removed" });
+  });
+  const roots = graph.nodes.filter((n) => n.kind === "agent" && !graph.edges.some((e) => e.type === "INSTRUCTS" && e.target === n.id)).map((n) => n.id);
+  if (cy) cy.destroy();
+  cy = cytoscape({
+    container: $("#cy"),
+    elements: els,
+    layout: { name: "breadthfirst", directed: true, roots, spacingFactor: 1.25, padding: 30 },
+    style: [
+      { selector: "node", style: { label: "data(label)", "text-wrap": "wrap", "text-valign": "center", color: css("--ink"), "font-size": 13,
+          "background-color": css("--panel"), "border-width": 2, "border-color": "#8a93a3", shape: "round-rectangle", width: 120, height: 48 } },
+      { selector: "node[kind='store']", style: { shape: "barrel", "border-color": "#c9832b", width: 130, height: 40, "font-size": 12 } },
+      { selector: "edge", style: { "curve-style": "bezier", "target-arrow-shape": "triangle", width: 2, "line-color": "#8a93a3", "target-arrow-color": "#8a93a3", "arrow-scale": 1 } },
+      { selector: "edge[type='REPORTS_TO']", style: { "line-style": "dashed", opacity: 0.7 } },
+      { selector: "edge[type='WRITES_TO'], edge[type='FEEDS']", style: { "line-color": "#c9832b", "target-arrow-color": "#c9832b", "line-style": "dotted", width: 2.5 } },
+      { selector: "edge.removed", style: { "line-color": css("--untrusted"), "target-arrow-color": css("--untrusted"), "line-style": "dashed", opacity: 0.35, label: "removed", "font-size": 10, color: css("--untrusted") } },
+      { selector: "node.removed", style: { opacity: 0.35, "border-style": "dashed", "border-color": css("--untrusted") } },
+      { selector: ".dim", style: { opacity: 0.18 } },
+      { selector: "edge.hu", style: { "line-color": css("--untrusted"), "target-arrow-color": css("--untrusted"), width: 4.5 } },
+      { selector: "edge.hp", style: { "line-color": css("--private"), "target-arrow-color": css("--private"), width: 4.5 } },
+      { selector: "edge.ho", style: { "line-color": css("--out"), "target-arrow-color": css("--out"), width: 4.5 } },
+      { selector: "node.hu", style: { "border-color": css("--untrusted"), "border-width": 3 } },
+      { selector: "node.hp", style: { "border-color": css("--private"), "border-width": 3 } },
+      { selector: "node.ho", style: { "border-color": css("--out"), "border-width": 3 } },
+      { selector: "node.meet", style: { "border-width": 5, "border-style": "double" } },
+    ],
+  });
+  cy.on("mouseover", "node", (e) => { $("#graphnote").textContent = e.target.data("purpose") || e.target.id(); });
+}
+
+function highlight(routes, meet) {
+  if (!cy) return;
+  cy.elements().removeClass("hu hp ho meet").addClass("dim");
+  const mark = (nodes, cls) => {
+    (nodes || []).forEach((id, i) => {
+      cy.getElementById(id).removeClass("dim").addClass(cls);
+      if (i > 0) cy.edges().filter((e) => e.source().id() === nodes[i - 1] && e.target().id() === id && !e.hasClass("removed")).removeClass("dim").addClass(cls);
+    });
+  };
+  mark(routes.untrusted, "hu"); mark(routes.private, "hp"); mark(routes.out, "ho");
+  if (meet) cy.getElementById(meet).addClass("meet");
+}
+function clearHighlight() { if (cy) cy.elements().removeClass("dim hu hp ho meet"); }
+
+const routeHtml = (r) => `
+  <div class="route"><span class="r-u">untrusted</span> ${esc((r.untrusted || []).join(" → "))}</div>
+  <div class="route"><span class="r-p">private&nbsp;&nbsp;</span> ${esc((r.private || []).join(" → "))}</div>
+  <div class="route"><span class="r-o">out&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> ${esc((r.out || []).join(" → "))}</div>`;
+
+// ------------------------------------------------------------------ tabs
+
+async function showScan() {
+  const sc = $("#scenario").value;
+  $("#side").innerHTML = `<p class="muted">Loading ${esc(sc)}…</p>`;
+  const d = state.scan = await api(`/api/${sc}/scan`);
+  drawGraph(d.graph);
+  $("#graphnote").textContent = "U untrusted input · P private read · S outbound sink";
+  const per = d.one_hop.per_agent;
+  const rows = Object.keys(per).map((a) => {
+    const has = (c) => per[a].includes(c) ? "●" : "·";
+    const toxic = d.one_hop.agents_toxic_on_their_own.includes(a);
+    return `<tr><td>${esc(a)}</td><td class="r-u">${has("untrusted_input")}</td><td class="r-p">${has("private_read")}</td><td class="r-o">${has("exfil_sink")}</td>
+      <td class="${toxic ? "bad" : "good"}">${toxic ? "toxic" : "looks safe"}</td></tr>`;
+  }).join("");
+  const toxic = d.flows.filter((f) => f.status === "TOXIC").length;
+  const unknown = d.flows.length - toxic;
+  const cards = d.flows.map((f, i) => `
+    <div class="card" data-i="${i}">
+      <span class="chip ${f.status}">${f.status}</span> <b>${esc(f.entry)}</b> + <b>${esc(f.reader)}</b> meet in <b>${esc(f.meet)}</b>, out via <b>${esc(f.exit)}</b>
+      <span class="muted">· ${f.hops} hops</span>
+      ${routeHtml(f.routes)}
+      <div class="muted" style="font-size:12px">sink tools: ${esc(f.tools.sink.slice(0, 3).join(", "))}${f.via_unknown.length ? " · unlabelled: " + esc(f.via_unknown.join(", ")) : ""}</div>
+    </div>`).join("");
+  $("#side").innerHTML = `
+    <h2>Per-agent check</h2>
+    <p class="muted">What reviewing one agent at a time shows.</p>
+    <table><tr><th>agent</th><th>U</th><th>P</th><th>S</th><th>verdict</th></tr>${rows}</table>
+    <h2 style="margin-top:18px">Graph check: <span class="${toxic ? "bad" : "good"}">${toxic} toxic</span>${unknown ? `, <span class="UNKNOWN">${unknown} unknown</span>` : ""}</h2>
+    <p class="muted">Untrusted content and private data that can meet in one agent with a path to an outbound tool. Click one to see its routes.</p>
+    ${cards || '<p class="good">No toxic flows.</p>'}`;
+  document.querySelectorAll(".card").forEach((c) => c.onclick = () => {
+    document.querySelectorAll(".card").forEach((x) => x.classList.remove("sel"));
+    c.classList.add("sel");
+    const f = d.flows[+c.dataset.i];
+    highlight(f.routes, f.meet);
+  });
+}
+
+async function showRepair() {
+  const sc = $("#scenario").value;
+  $("#side").innerHTML = `<p class="muted">Searching repairs on graph copies…</p>`;
+  const [scan, d] = await Promise.all([state.scan && state.scan.sc === sc ? state.scan : api(`/api/${sc}/scan`), api(`/api/${sc}/repair`)]);
+  scan.sc = sc; state.scan = scan;
+  drawGraph(scan.graph);
+  const rejected = d.rejected_single_actions.map((r) => `<tr><td>${esc(r.action)}</td><td class="bad">${esc(r.reason)}</td></tr>`).join("");
+  const sols = d.repairs.map((r, i) => `<div class="card" data-i="${i}"><span class="chip good">cost ${r.cost}</span> ${esc(r.describe.join("; "))}</div>`).join("");
+  $("#side").innerHTML = `
+    <h2>Single fixes that do not work</h2>
+    <p class="muted">Each tried on a copy of the graph (GRAPH.COPY), then the same flow and task queries re-run.</p>
+    <table><tr><th>intervention</th><th>result</th></tr>${rejected || '<tr><td colspan="2" class="muted">none</td></tr>'}</table>
+    <h2 style="margin-top:18px">Cheapest repairs that remove every flow and keep every task</h2>
+    ${sols || '<div class="banner bad">No configuration change keeps every task working. Needs a human decision; the runtime gate is the remaining protection.</div>'}
+    ${d.after ? `<p><button id="toggle">Show graph after repair 1</button></p><div id="afterinfo"></div>` : ""}`;
+  if (d.after) {
+    let showing = false;
+    $("#toggle").onclick = () => {
+      showing = !showing;
+      if (showing) {
+        const key = (e) => `${e.source}|${e.type}|${e.target}`;
+        const after = new Set(d.after.graph.edges.map(key));
+        const removed = scan.graph.edges.filter((e) => !after.has(key(e)));
+        drawGraph(d.after.graph, removed, scan.graph.nodes);
+        $("#toggle").textContent = "Show graph before repair";
+        $("#afterinfo").innerHTML = `<div class="banner ${d.after.flows_left.length ? "bad" : "good"}">After repair: ${d.after.flows_left.length} toxic flows,
+          ${Object.keys(d.after.broken_tasks).length} broken tasks. Removed edges are shown dashed.</div>`;
+      } else {
+        drawGraph(scan.graph);
+        $("#toggle").textContent = "Show graph after repair 1";
+        $("#afterinfo").innerHTML = "";
+      }
+    };
+  }
+}
+
+async function showGate() {
+  const sc = state.scenarios.find((s) => s.name === $("#scenario").value);
+  if (!state.scan || state.scan.sc !== sc.name) { state.scan = await api(`/api/${sc.name}/scan`); state.scan.sc = sc.name; }
+  drawGraph(state.scan.graph);
+  if (!sc.attacks.length) { $("#side").innerHTML = `<p class="muted">No scripted attack for this scenario.</p>`; return; }
+  $("#side").innerHTML = `
+    <h2>Runtime gate</h2>
+    <p class="muted">A scripted session goes through the gate. Every call is stored as a node; before an outbound call the gate asks the graph whether untrusted and private reads from this session can meet on the way to the caller.</p>
+    <p><select id="attack">${sc.attacks.map((a) => `<option>${esc(a)}</option>`).join("")}</select>
+      <button data-mode="nogate">No gate</button> <button data-mode="gate" class="on">Gate on</button> <button data-mode="after">After repair</button></p>
+    <div id="replay"></div>`;
+  const run = async (mode) => {
+    document.querySelectorAll("[data-mode]").forEach((b) => b.classList.toggle("on", b.dataset.mode === mode));
+    $("#replay").innerHTML = `<p class="muted">Running session (starts real MCP servers)…</p>`;
+    const r = await api(`/api/${sc.name}/replay?attack=${encodeURIComponent($("#attack").value)}&mode=${mode}`);
+    const steps = r.steps.map((s, i) => `
+      <div class="card" data-i="${i}">
+        <div class="step"><b>#${s.seq}</b><div><b>${esc(s.agent)}</b> → <span class="route">${esc(s.tool)}</span><div class="muted">${esc(s.note)}</div></div>
+        <span class="chip ${s.status}">${s.status}</span></div>
+        ${s.status !== "ALLOW" ? `<div style="font-size:12px;margin-top:4px">${esc(s.reason)}</div>` : ""}
+        ${s.routes && s.routes.out ? routeHtml(s.routes) : ""}
+      </div>`).join("");
+    const banner = r.leaked_via.length
+      ? `<div class="banner bad">Secret left through ${esc(r.leaked_via.join(", "))}</div>`
+      : `<div class="banner good">The secret did not leave. ${r.blocked} blocked, ${r.unreachable} impossible.</div>`;
+    $("#replay").innerHTML = `${r.repair.length ? `<p class="muted">Repair applied: ${esc(r.repair.join("; "))}</p>` : ""}${banner}${steps}`;
+    document.querySelectorAll("#replay .card").forEach((c) => c.onclick = () => {
+      const s = r.steps[+c.dataset.i];
+      if (s.routes && s.routes.out) highlight(s.routes, s.routes.out[0]); else clearHighlight();
+    });
+  };
+  document.querySelectorAll("[data-mode]").forEach((b) => b.onclick = () => run(b.dataset.mode));
+  run("gate");
+}
+
+async function show() {
+  try {
+    if (state.tab === "scan") { await showScan(); state.scan.sc = $("#scenario").value; }
+    else if (state.tab === "repair") await showRepair();
+    else await showGate();
+  } catch (e) { $("#side").innerHTML = `<p class="bad">Error: ${esc(e.message)}</p>`; }
+}
+
+(async () => {
+  state.scenarios = await api("/api/scenarios");
+  $("#scenario").innerHTML = state.scenarios.map((s) => `<option value="${esc(s.name)}" title="${esc(s.description)}">${esc(s.name)}</option>`).join("");
+  $("#scenario").onchange = () => { state.scan = null; show(); };
+  document.querySelectorAll("nav button").forEach((b) => b.onclick = () => {
+    document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("on", x === b));
+    state.tab = b.dataset.tab; show();
+  });
+  show();
+})();
+</script>
+</body>
+</html>

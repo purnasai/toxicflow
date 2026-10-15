@@ -10,6 +10,7 @@
   toxicflow approve <scenario> <id>  human approval: apply a proposal, verify, record
   toxicflow gate <scenario> <agent> --session S   runtime gate as an MCP proxy (stdio)
   toxicflow replay <scenario> <attack> [--after-repair] [--no-gate]   scripted session through the gate
+  toxicflow ui [--port 8790]         web UI
 """
 
 from __future__ import annotations
@@ -168,7 +169,15 @@ def main(argv: list[str] | None = None) -> int:
     rp.add_argument("attack")
     rp.add_argument("--after-repair", action="store_true")
     rp.add_argument("--no-gate", action="store_true", help="baseline: let every call through")
+    ui = sub.add_parser("ui")
+    ui.add_argument("--port", type=int, default=8790)
     args = p.parse_args(argv)
+
+    if args.cmd == "ui":
+        from .ui import main as ui_main
+
+        ui_main(args.port)
+        return 0
 
     if args.cmd == "gate":
         from .gate_proxy import serve

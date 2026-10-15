@@ -20,6 +20,28 @@ toxicflow replay acme acme_injection --after-repair   # after the repair those s
 - `scan` shows the per-agent view first: no single agent holds all three capabilities. The multi-hop query then finds 8 flows of 2–4 hops. One goes `triage -> coder -> memory/team-kb -> standup`, with no delegation edge between coder and standup at all.
 - `repair` explains why each obvious single fix fails. For example, cutting `triage -> coder` removes every flow but breaks the `fix-bug` task. It then finds the cheapest combination that works (cost 3): coder returns structured results only, and coder gets its own memory instance.
 
+## Web UI
+
+`toxicflow ui` opens http://localhost:8790. Every view comes straight from FalkorDB through the same code as the CLI.
+
+| Scan | Repair | Runtime gate |
+|---|---|---|
+| ![scan](docs/ui-scan.png) | ![repair](docs/ui-repair.png) | ![gate](docs/ui-gate.png) |
+
+- **Scan:** the per-agent table on one side, the graph's flows on the other. Click a flow to light up its untrusted, private and outbound routes.
+- **Repair:** every single fix that fails, with the reason, then the cheapest repair. A toggle shows the graph after the repair, with removed edges dashed.
+- **Runtime gate:** run the scripted attack with no gate, with the gate on, or after the repair. Click a blocked step to see its path.
+
+## Scenarios
+
+| Scenario | Shape | Result |
+|---|---|---|
+| `acme` | triage delegates to a coder and a researcher; a standup bot shares memory with the coder | Per-agent check: all safe. Graph: 8 flows. Cheapest fix: cost 3, two changes. |
+| `analytics` | an analyst delegates to a SQL agent and a web-search agent | 2 flows. Quarantining the SQL agent fixes both; quarantining the web agent does **not**. |
+| `assistant` | one browser agent that fills forms from local notes | 1 flow. **No configuration change keeps its job working**, so a human decides and the runtime gate protects it meanwhile. |
+| `github_solo` | one agent with the full GitHub server (the publicly reported GitHub MCP injection shape) | Per-agent check and graph agree. |
+| `unlabelled` | the only outbound path goes through a tool nobody labelled | UNKNOWN, never "safe". The gate fails closed. |
+
 ## Data: real MCP servers, not synthetic tools
 
 `toxicflow harvest` starts 14 public MCP servers over stdio and saves the tools each reports via `tools/list`: 109 tools in total. The servers are filesystem, fetch, git, memory, time, github, slack, postgres, sqlite, brave-search, puppeteer, google-maps, sentry and everything. Credentials are dummies; listing tools never calls an upstream API. Results are in `data/tools/*.json` with their source URLs.
@@ -168,10 +190,12 @@ Also done:
 - runtime gate proxy and replay;
 - 16 tests.
 
+- web UI;
+- analytics and assistant scenarios.
+
 Next:
-- a small UI showing paths and gate decisions;
-- more scenarios;
-- demo video.
+- demo video;
+- blog post.
 
 ## AI assistance disclosure
 

@@ -209,7 +209,7 @@ def run_replay(scenario: str, attack_name: str, mode: str = "gate", graph_name: 
         steps.append(
             {
                 "seq": seq, "agent": agent, "tool": tool, "note": note, "status": d.status,
-                "reason": d.reason, "path": d.path, "result": _short(result, 300), "leaked": leaked,
+                "reason": d.reason, "path": d.path, "routes": d.routes, "result": _short(result, 300), "leaked": leaked,
             }
         )
     return {
