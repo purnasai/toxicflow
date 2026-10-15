@@ -1,0 +1,12 @@
+# One agent with the full GitHub server: the shape of the publicly reported
+# GitHub MCP prompt-injection (malicious public issue -> private repo read -> public PR).
+# A per-agent scanner catches this one; it is here to show both views agree on it.
+name: github_solo
+description: One agent with the complete GitHub MCP server.
+agents:
+  - id: maintainer
+    purpose: Answer issues across the user's repositories.
+    mounts:
+      - {server: github}
+tasks:
+  - {id: answer-issues, agent: maintainer, needs: [github.get_issue, github.add_issue_comment]}

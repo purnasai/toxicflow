@@ -1,0 +1,25 @@
+[project]
+name = "toxicflow"
+version = "0.1.0"
+description = "Graph-based toxic-flow analysis and least-disruptive repair for MCP agent setups (FalkorDB)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "falkordb>=1.8.0",
+    "mcp>=2.3.0",
+    "openai>=3.31.0",
+    "pyyaml>=6.0.3",
+    "rich>=15.0.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.8,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[project.scripts]
+toxicflow = "toxicflow.cli:main"

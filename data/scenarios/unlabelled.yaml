@@ -1,0 +1,18 @@
+# The only path to a sink goes through a tool nobody has labelled.
+# The right answer is UNKNOWN, not "safe".
+name: unlabelled
+description: A reader agent hands work to an agent whose only tool is unlabelled.
+agents:
+  - id: reader
+    purpose: Summarise issues against local notes.
+    mounts:
+      - {server: github, tools: [get_issue]}
+      - {server: filesystem, tools: [read_text_file]}
+    delegates:
+      - {to: helper, returns: text}
+  - id: helper
+    purpose: Run long background jobs.
+    mounts:
+      - {server: everything, tools: [trigger-long-running-operation]}
+tasks:
+  - {id: summarise, agent: reader, needs: [github.get_issue, filesystem.read_text_file]}

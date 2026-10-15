@@ -1,0 +1,64 @@
+# Public MCP servers whose tool lists are harvested live (stdio, tools/list).
+# Credentials are dummies: listing tools never calls the upstream API.
+# {SANDBOX} is replaced with data/sandbox at harvest time.
+servers:
+  - id: filesystem
+    source: https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-filesystem", "{SANDBOX}"]
+  - id: fetch
+    source: https://github.com/modelcontextprotocol/servers/tree/main/src/fetch
+    command: uvx
+    args: ["mcp-server-fetch"]
+  - id: git
+    source: https://github.com/modelcontextprotocol/servers/tree/main/src/git
+    command: uvx
+    args: ["mcp-server-git"]
+  - id: memory
+    source: https://github.com/modelcontextprotocol/servers/tree/main/src/memory
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-memory"]
+  - id: time
+    source: https://github.com/modelcontextprotocol/servers/tree/main/src/time
+    command: uvx
+    args: ["mcp-server-time"]
+  - id: github
+    source: https://github.com/modelcontextprotocol/servers-archived/tree/main/src/github
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-github"]
+    env: {GITHUB_PERSONAL_ACCESS_TOKEN: dummy}
+  - id: slack
+    source: https://github.com/modelcontextprotocol/servers-archived/tree/main/src/slack
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-slack"]
+    env: {SLACK_BOT_TOKEN: xoxb-dummy, SLACK_TEAM_ID: T0000}
+  - id: postgres
+    source: https://github.com/modelcontextprotocol/servers-archived/tree/main/src/postgres
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-postgres", "postgresql://localhost/dummy"]
+  - id: sqlite
+    source: https://github.com/modelcontextprotocol/servers-archived/tree/main/src/sqlite
+    command: uvx
+    args: ["--with", "mcp<2", "mcp-server-sqlite", "--db-path", "{SANDBOX}/demo.db"]  # archived; needs MCP SDK 1.x
+  - id: brave-search
+    source: https://github.com/modelcontextprotocol/servers-archived/tree/main/src/brave-search
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-brave-search"]
+    env: {BRAVE_API_KEY: dummy}
+  - id: puppeteer
+    source: https://github.com/modelcontextprotocol/servers-archived/tree/main/src/puppeteer
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-puppeteer"]
+  - id: google-maps
+    source: https://github.com/modelcontextprotocol/servers-archived/tree/main/src/google-maps
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-google-maps"]
+    env: {GOOGLE_MAPS_API_KEY: dummy}
+  - id: sentry
+    source: https://github.com/modelcontextprotocol/servers-archived/tree/main/src/sentry
+    command: uvx
+    args: ["--with", "mcp<2", "--with", "httpx", "mcp-server-sentry", "--auth-token", "dummy"]  # archived; missing httpx dep
+  - id: everything
+    source: https://github.com/modelcontextprotocol/servers/tree/main/src/everything
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-everything"]

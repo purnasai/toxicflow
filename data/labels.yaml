@@ -1,0 +1,106 @@
+# Capability labels for harvested MCP tools.
+#
+# Capabilities (a tool can have several):
+#   untrusted_input  returns content a third party can author (web pages, issues, chat messages)
+#   private_read     returns data that should not leave the organisation
+#   exfil_sink       can send data to a place outside the trust boundary
+#   store_read       reads a store other agents can write to (shared-state channel)
+#   store_write      writes a store other agents can read
+#   none             reviewed, none of the above
+#
+# Rules are regexes over tool names, matched per server. First match wins.
+# A tool that matches no rule is labelled `unknown` and is never treated as safe.
+servers:
+  fetch:
+    - match: "^fetch$"
+      caps: [untrusted_input, exfil_sink]
+      why: "Returns arbitrary web content; the URL itself (query string) can carry data out."
+  brave-search:
+    - match: ".*"
+      caps: [untrusted_input, exfil_sink]
+      why: "Search results are third-party text; the query is sent to an external API."
+  puppeteer:
+    - match: "^puppeteer_(navigate|fill|select|click|evaluate)$"
+      caps: [untrusted_input, exfil_sink]
+      why: "Drives a real browser: loads attacker pages and can submit forms or navigate to URLs carrying data."
+    - match: "^puppeteer_(screenshot|hover)$"
+      caps: [untrusted_input]
+      why: "Captures page content authored by third parties."
+  github:
+    - match: "^(get_issue|list_issues|search_issues|get_pull_request_comments|get_pull_request_reviews|get_pull_request|list_pull_requests|search_users)$"
+      caps: [untrusted_input]
+      why: "Issue/PR text and comments can be written by anyone on a public repo."
+    - match: "^(get_file_contents|search_code|list_commits|get_pull_request_files|get_pull_request_status|search_repositories)$"
+      caps: [private_read, untrusted_input]
+      why: "Reads repository contents, which may be private, and which outsiders can influence via PRs."
+    - match: "^(create_issue|add_issue_comment|update_issue|create_pull_request|create_pull_request_review|create_or_update_file|push_files|create_repository|fork_repository|create_branch|merge_pull_request|update_pull_request_branch)$"
+      caps: [exfil_sink]
+      why: "Publishes text to GitHub, which can be a public repo."
+  slack:
+    - match: "^slack_(get_channel_history|get_thread_replies)$"
+      caps: [untrusted_input, private_read]
+      why: "Messages are internal, and anyone in the channel (including guests and bots) can author them."
+    - match: "^slack_(get_users|get_user_profile|list_channels)$"
+      caps: [private_read]
+      why: "Workspace directory data."
+    - match: "^slack_(post_message|reply_to_thread)$"
+      caps: [exfil_sink]
+      why: "Posts text to channels, which can include shared or external channels."
+    - match: "^slack_add_reaction$"
+      caps: [none]
+      why: "Emoji only."
+  filesystem:
+    - match: "^(read_file|read_text_file|read_media_file|read_multiple_files|search_files|directory_tree|list_directory|list_directory_with_sizes|get_file_info)$"
+      caps: [private_read, store_read]
+      why: "Local files (keys, .env, source). Other agents mounting the same root can have written them."
+    - match: "^(write_file|edit_file|create_directory|move_file)$"
+      caps: [store_write]
+      why: "Writes files other agents on the same root will read."
+    - match: "^list_allowed_directories$"
+      caps: [none]
+      why: "Configuration only."
+  git:
+    - match: "^git_(status|diff_unstaged|diff_staged|diff|log|show|branch)$"
+      caps: [private_read]
+      why: "Local repository history and uncommitted changes."
+    - match: "^git_(commit|add|reset|create_branch|checkout)$"
+      caps: [none]
+      why: "Local-only writes; no push tool on this server."
+  memory:
+    - match: "^(read_graph|search_nodes|open_nodes)$"
+      caps: [store_read, private_read]
+      why: "Shared knowledge graph; any agent mounting it can have written to it."
+    - match: "^(create_entities|create_relations|add_observations|delete_entities|delete_observations|delete_relations)$"
+      caps: [store_write]
+      why: "Writes the shared knowledge graph."
+  postgres:
+    - match: "^query$"
+      caps: [private_read]
+      why: "Read-only SQL over the production database."
+  sqlite:
+    - match: "^(read_query|list_tables|describe_table)$"
+      caps: [private_read, store_read]
+      why: "Local database other agents can write to."
+    - match: "^(write_query|create_table|append_insight)$"
+      caps: [store_write]
+      why: "Writes the shared database."
+  sentry:
+    - match: "^get_sentry_issue$"
+      caps: [untrusted_input, private_read]
+      why: "Error payloads contain user-controlled strings and internal stack traces."
+  google-maps:
+    - match: ".*"
+      caps: [exfil_sink]
+      why: "Queries are sent to an external API."
+  time:
+    - match: ".*"
+      caps: [none]
+      why: "Clock only."
+  everything:
+    - match: "^get-env$"
+      caps: [private_read]
+      why: "Returns the server's environment variables, which often hold secrets."
+    - match: "^(echo|get-sum|get-tiny-image|get-annotated-message|toggle-simulated-logging|toggle-subscriber-updates|get-structured-content)$"
+      caps: [none]
+      why: "Test fixtures."
+    # The remaining 'everything' tools are deliberately left unlabelled -> unknown.

@@ -1,0 +1,20 @@
+{
+  "server": "postgres",
+  "source": "https://github.com/modelcontextprotocol/servers-archived/tree/main/src/postgres",
+  "package": "npx -y @modelcontextprotocol/server-postgres postgresql://localhost/dummy",
+  "harvested_at": "2026-10-15T13:31:40+00:00",
+  "tools": [
+    {
+      "name": "query",
+      "description": "Run a read-only SQL query",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "sql": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ]
+}

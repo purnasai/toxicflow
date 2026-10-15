@@ -1,0 +1,11 @@
+name: toxicflow
+services:
+  falkordb:
+    image: falkordb/falkordb:latest
+    ports:
+      - "6390:6379"   # Redis protocol (FalkorDB)
+      - "3390:3000"   # FalkorDB Browser UI
+    volumes:
+      - falkordb-data:/var/lib/falkordb/data
+volumes:
+  falkordb-data:

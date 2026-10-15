@@ -1,0 +1,43 @@
+# Acme engineering: four agents built from real, public MCP servers.
+# Looked at one agent at a time, none of them combines all three of
+# untrusted input, private data and an outbound channel.
+name: acme
+description: Issue triage team. A triage agent delegates to a coder and a researcher; a standup bot reads the shared team memory.
+
+agents:
+  - id: triage
+    purpose: Triage new GitHub issues and post a daily summary to Slack.
+    mounts:
+      - {server: github, tools: [list_issues, get_issue]}
+      - {server: slack, tools: [slack_post_message]}
+    delegates:
+      - {to: coder, returns: text}
+      - {to: researcher, returns: text}
+
+  - id: coder
+    purpose: Reproduce reported bugs and prepare fixes in the local checkout.
+    mounts:
+      - {server: filesystem, instance: workspace}
+      - {server: git}
+      - {server: memory, instance: team-kb, tools: [add_observations, create_entities]}
+
+  - id: researcher
+    purpose: Look up documentation and changelogs on the web.
+    mounts:
+      - {server: fetch}
+      - {server: brave-search}
+
+  - id: standup
+    purpose: Read the team knowledge base each morning and post highlights to Slack.
+    mounts:
+      - {server: memory, instance: team-kb, tools: [read_graph, search_nodes]}
+      - {server: slack, tools: [slack_post_message]}
+
+# Work that must keep functioning after any repair.
+# `agent` is who the task is assigned to; the tool may be reached through delegation.
+tasks:
+  - {id: daily-summary, agent: triage, needs: [github.list_issues, github.get_issue, slack.slack_post_message]}
+  - {id: fix-bug, agent: triage, needs: [filesystem.read_text_file, filesystem.edit_file, git.git_diff, git.git_commit]}
+  - {id: research, agent: triage, needs: [fetch.fetch]}
+  - {id: record-findings, agent: coder, needs: [memory.add_observations]}
+  - {id: standup-notes, agent: standup, needs: [memory.read_graph, slack.slack_post_message]}

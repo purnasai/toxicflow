@@ -1,0 +1,24 @@
+{
+  "server": "sentry",
+  "source": "https://github.com/modelcontextprotocol/servers-archived/tree/main/src/sentry",
+  "package": "uvx --with mcp<2 --with httpx mcp-server-sentry --auth-token dummy",
+  "harvested_at": "2026-10-15T13:35:13+00:00",
+  "tools": [
+    {
+      "name": "get_sentry_issue",
+      "description": "Retrieve and analyze a Sentry issue by ID or URL. Use this tool when you need to:\n                - Investigate production errors and crashes\n                - Access detailed stacktraces from Sentry\n                - Analyze error patterns and frequencies\n                - Get information about when issues first/last occurred\n                - Review error counts and status",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "issue_id_or_url": {
+            "type": "string",
+            "description": "Sentry issue ID or URL to analyze"
+          }
+        },
+        "required": [
+          "issue_id_or_url"
+        ]
+      }
+    }
+  ]
+}

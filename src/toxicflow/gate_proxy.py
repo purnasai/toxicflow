@@ -1,0 +1,232 @@
+"""Runtime gate in front of real MCP servers.
+
+  toxicflow gate <scenario> <agent> --session S   MCP server (stdio) for one agent: exposes exactly
+                                                  the tools the graph says it may call, checks each
+                                                  call with the Gate, forwards allowed calls.
+  toxicflow replay <scenario> <attack>             drive a scripted multi-agent session through the gate.
+
+Downstream calls go to the real MCP server from data/servers.yaml (started on demand), except
+tools listed in data/fixtures/<scenario>.yaml, which need credentials we do not have.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import shutil
+from contextlib import AsyncExitStack
+
+import anyio
+import yaml
+from mcp import ClientSession, StdioServerParameters, types
+from mcp.client.stdio import stdio_client
+from mcp.server.lowlevel import Server
+from mcp.server.stdio import stdio_server
+from rich.console import Console
+from rich.table import Table
+
+from .gate import Decision, FixtureBackend, Gate, fixture_path
+from .queries import INFLUENCE, MAX_HOPS
+
+REACHES = f"""
+MATCH p = (:Agent {{id: $src}})-[:{INFLUENCE}*0..{MAX_HOPS}]->(:Agent {{id: $dst}})
+RETURN [n IN nodes(p) | n.id] ORDER BY length(p) LIMIT 1
+"""
+from .labels import DATA
+from .service import ToxicFlowService
+
+console = Console(stderr=True)
+SANDBOX = DATA / "sandbox"
+SEP = "__"
+
+
+def seed_sandbox() -> None:
+    """A tiny fake project for the filesystem server. The secret is fake."""
+    proj = SANDBOX / "project"
+    proj.mkdir(parents=True, exist_ok=True)
+    (proj / ".env").write_text("PAYMENTS_API_KEY=demo_live_4f9a2c-NOT-A-REAL-KEY\nDB_PASSWORD=hunter2-demo\n")
+    (proj / "app.py").write_text("def total(items):\n    return sum(i.price for i in items)  # bug: ignores quantity\n")
+
+
+class Backends:
+    def __init__(self, scenario: str):
+        self.fixtures = FixtureBackend(fixture_path(scenario))
+        self.specs = {s["id"]: s for s in yaml.safe_load((DATA / "servers.yaml").read_text())["servers"]}
+        self.stack = AsyncExitStack()
+        self.sessions: dict[str, ClientSession] = {}
+
+    async def __aenter__(self):
+        await self.stack.__aenter__()
+        return self
+
+    async def __aexit__(self, *exc):
+        await self.stack.__aexit__(*exc)
+
+    async def start(self, tools: list[str]) -> None:
+        """Start every real downstream server these tools need, in the caller's task.
+        (Starting them lazily inside a request handler breaks anyio cancel scopes.)"""
+        for server in sorted({t.split(".", 1)[0] for t in tools if not self.fixtures.handles(t)}):
+            await self._session(server)
+
+    async def _session(self, server: str) -> ClientSession:
+        if server not in self.sessions:
+            spec = self.specs[server]
+            args = [a.replace("{SANDBOX}", str(SANDBOX)) for a in spec.get("args", [])]
+            params = StdioServerParameters(command=spec["command"], args=args, env={**os.environ, **spec.get("env", {})})
+            read, write = await self.stack.enter_async_context(stdio_client(params))
+            session = await self.stack.enter_async_context(ClientSession(read, write))
+            await session.initialize()
+            self.sessions[server] = session
+        return self.sessions[server]
+
+    async def call(self, tool: str, args: dict) -> tuple[str, bool]:
+        if self.fixtures.handles(tool):
+            return await self.fixtures.call(tool, args), False
+        server, name = tool.split(".", 1)
+        result = await (await self._session(server)).call_tool(name, args)
+        text = "\n".join(getattr(c, "text", "") for c in result.content)
+        return text, bool(getattr(result, "is_error", False) or getattr(result, "isError", False))
+
+
+def _blocked_text(tool: str, d: Decision) -> str:
+    return f"BLOCKED by ToxicFlow ({d.status}): {d.reason}. Path: {' -> '.join(d.path)}. Tool {tool} was not called."
+
+
+# ------------------------------------------------------------------ MCP proxy
+
+
+def serve(scenario: str, agent: str, session: str) -> None:
+    seed_sandbox()
+    svc = ToxicFlowService(scenario)
+    svc._agent(agent)
+    gate = Gate(svc.g, session)
+    schemas = {}
+    for f in (DATA / "tools").glob("*.json"):
+        d = json.loads(f.read_text())
+        for t in d["tools"]:
+            schemas[f"{d['server']}.{t['name']}"] = t
+
+    def allowed_tools() -> list[str]:
+        q = "MATCH (:Agent {id: $a})-[:CAN_CALL]->(t:Tool) RETURN t.id ORDER BY t.id"
+        return [r[0] for r in svc.g.ro_query(q, {"a": agent}).result_set]
+
+    async def on_list_tools(ctx, params) -> types.ListToolsResult:
+        tools = []
+        for tid in allowed_tools():
+            s = schemas[tid]
+            tools.append(
+                types.Tool(
+                    name=tid.replace(".", SEP, 1),
+                    description=f"[{tid.split('.')[0]}] {s.get('description', '')}"[:1000],
+                    input_schema=s.get("input_schema") or s.get("inputSchema") or {"type": "object"},
+                )
+            )
+        return types.ListToolsResult(tools=tools)
+
+    async def on_call_tool(ctx, params: types.CallToolRequestParams) -> types.CallToolResult:
+        tool = params.name.replace(SEP, ".", 1)
+        args = params.arguments or {}
+        d = gate.check(agent, tool)
+        seq = gate.record(agent, tool, d, args)
+        console.print(f"[dim]#{seq}[/dim] {agent} {tool}: {d.status} {d.reason}")
+        if not d.allowed:
+            return types.CallToolResult(content=[types.TextContent(type="text", text=_blocked_text(tool, d))], isError=True)
+        text, err = await backends.call(tool, args)
+        return types.CallToolResult(content=[types.TextContent(type="text", text=text)], isError=err)
+
+    server = Server(f"toxicflow-gate-{agent}", on_list_tools=on_list_tools, on_call_tool=on_call_tool)
+
+    async def main():
+        global backends
+        async with Backends(scenario) as b:
+            await b.start(allowed_tools())
+            backends = b
+            async with stdio_server() as (read, write):
+                await server.run(read, write, server.create_initialization_options())
+
+    anyio.run(main)
+
+
+backends: Backends
+
+
+# ------------------------------------------------------------------ scripted replay
+
+
+async def _replay(scenario: str, attack: dict, session: str, svc: ToxicFlowService, use_gate: bool = True) -> list[tuple]:
+    gate = Gate(svc.g, session)
+    rows = []
+    async with Backends(scenario) as b:
+        await b.start([s["tool"] for s in attack["steps"]])
+        for i, step in enumerate(attack["steps"], 1):
+            agent, tool = step["agent"], step["tool"]
+            args = json.loads(json.dumps(step.get("args", {})).replace("{SANDBOX}", str(SANDBOX)))
+            if "uses" in step:
+                n = step["uses"]
+                src = attack["steps"][n - 1]["agent"]
+                if not rows[n - 1][4].allowed:
+                    why = f"step {n} never happened, so its data does not exist"
+                elif not svc.g.ro_query(REACHES, {"src": src, "dst": agent}).result_set:
+                    why = f"data from step {n} ({src}) has no path to {agent} in the graph"
+                else:
+                    why = ""
+                if why:
+                    d = Decision("unreachable", "UNREACHABLE", why + "; this step cannot happen")
+                    rows.append((gate.record(agent, tool, d, args), agent, tool, step.get("note", ""), d, ""))
+                    continue
+            d = gate.check(agent, tool) if use_gate else Decision("allow", "ALLOW", "gate disabled")
+            seq = gate.record(agent, tool, d, args)
+            out = ""
+            if d.allowed:
+                out, _ = await b.call(tool, args)
+            rows.append((seq, agent, tool, step.get("note", ""), d, out))
+    return rows
+
+
+def replay(scenario: str, attack_name: str, after_repair: bool = False, use_gate: bool = True) -> int:
+    seed_sandbox()
+    attack = yaml.safe_load((DATA / "attacks" / f"{attack_name}.yaml").read_text())
+    svc = ToxicFlowService(scenario, reload=True)
+    label = "before repair"
+    if after_repair:
+        from .repair import apply_repair, search
+
+        best = search(svc.db, svc.g)[0][0]
+        apply_repair(svc.db, svc.g, best.actions)
+        label = "after repair: " + "; ".join(a.describe() for a in best.actions)
+    if not use_gate:
+        label += ", gate disabled"
+    session = f"{attack_name}-{'after' if after_repair else 'before'}{'' if use_gate else '-nogate'}"
+    rows = anyio.run(_replay, scenario, attack, session, svc, use_gate)
+
+    out = Console()
+    t = Table(title=f"{attack.get('title', attack_name)} ({label})", show_lines=True)
+    for col in ("#", "agent", "tool", "step", "gate", "reason / result"):
+        t.add_column(col, overflow="fold")
+    colour = {"ALLOW": "green", "ALLOW_TAINTED": "yellow", "BLOCK": "red", "BLOCK_UNKNOWN": "red", "DENY_NOT_MOUNTED": "red", "UNREACHABLE": "cyan"}
+    for seq, agent, tool, note, d, result in rows:
+        detail = d.reason if d.status != "ALLOW" else _short(result)
+        if d.path:
+            detail += f"\npath: {' -> '.join(d.path)}"
+        t.add_row(str(seq), agent, tool, note, f"[{colour[d.status]}]{d.status}[/]", detail)
+    out.print(t)
+    blocked = sum(r[4].decision == "block" for r in rows)
+    unreachable = sum(r[4].status == "UNREACHABLE" for r in rows)
+    out.print(f"{blocked} call(s) blocked, {unreachable} step(s) impossible. Session '{session}' recorded in graph {svc.g.name}.")
+    sinks = {r[0] for r in svc.g.ro_query("MATCH (t:Tool)-[:HAS_CAP]->(:Capability {name: 'exfil_sink'}) RETURN t.id").result_set}
+    secret = attack.get("secret", "\0")
+    leaked = [r[2] for r, step in zip(rows, attack["steps"]) if r[4].allowed and r[2] in sinks and secret in json.dumps(step.get("args", {}))]
+    if leaked:
+        out.print(f"[red]Secret left through: {leaked}[/red]")
+    else:
+        out.print("[green]The secret did not leave through any outbound tool.[/green]")
+    return 1 if leaked else 0
+
+
+def _short(text: str, n: int = 140) -> str:
+    text = " ".join(str(text).split())
+    return text if len(text) <= n else text[: n - 1] + "…"
+
+
+def which(cmd: str) -> bool:
+    return shutil.which(cmd) is not None
