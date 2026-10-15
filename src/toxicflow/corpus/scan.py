@@ -90,13 +90,14 @@ def project_stats(pm: ProjectModel, g: Graph) -> dict:
 MODES = [("configured", "curated"), ("configured", "llm"), ("orchestrator", "curated"), ("orchestrator", "llm")]
 
 
-def scan(keep: int = 0, limit: int | None = None) -> None:
+def scan(keep: int = 0, limit: int | None = None, bash: str = "full") -> None:
     db = connect()
-    resolvers = {"curated": Resolver({}), "llm": Resolver(load_llm_labels())}
+    resolvers = {"curated": Resolver({}, bash), "llm": Resolver(load_llm_labels(), bash)}
+    results = RESULTS if bash == "full" else RESULTS.with_name(f"results_bash_{bash}.jsonl")
     repos = [json.loads(line) for line in (CORPUS / "repos.jsonl").read_text().splitlines()]
     repos = [r for r in repos if r["agent_files"]][:limit]
     kept = 0
-    with RESULTS.open("w") as out:
+    with results.open("w") as out:
         for i, rec in enumerate(repos, 1):
             d = RAW / rec["repo"].replace("/", "__")
             row = {"repo": rec["repo"]}
@@ -129,8 +130,9 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--keep", type=int, default=0)
     ap.add_argument("--limit", type=int)
+    ap.add_argument("--bash", choices=["full", "local"], default="full", help="local = counterfactual shell without network")
     a = ap.parse_args()
-    scan(a.keep, a.limit)
+    scan(a.keep, a.limit, a.bash)
 
 
 if __name__ == "__main__":

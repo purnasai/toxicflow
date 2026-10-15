@@ -66,3 +66,10 @@ def test_inheriting_subagent_is_toxic_alone(db, project):
         assert "helper" in summarize(g).toxic_alone
     finally:
         g.delete()
+
+
+def test_bash_local_counterfactual():
+    full, local = Resolver({}), Resolver({}, bash="local")
+    assert "exfil_sink" in full.builtin("Bash").caps
+    assert local.builtin("Bash").caps == ("private_read", "store_read", "store_write")
+    assert "unknown" in full.builtin("Bash(git:*)").caps

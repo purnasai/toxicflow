@@ -1,0 +1,3389 @@
+{
+ "2d7fd59e-7f26-4bab-92c6-7baa658935f0::create_new_file": [
+  "none"
+ ],
+ "2d7fd59e-7f26-4bab-92c6-7baa658935f0::get_screenshot": [
+  "private_read"
+ ],
+ "2d7fd59e-7f26-4bab-92c6-7baa658935f0::whoami": [
+  "private_read"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::apply_migration": [
+  "none"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::confirm_cost": [
+  "none"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::create_branch": [
+  "none"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::delete_branch": [
+  "none"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::deploy_edge_function": [
+  "none"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::get_advisors": [
+  "private_read"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::get_cost": [
+  "private_read"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::get_edge_function": [
+  "private_read"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::get_logs": [
+  "private_read"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::get_project": [
+  "private_read"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::get_project_url": [
+  "private_read"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::get_publishable_keys": [
+  "private_read"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::list_branches": [
+  "private_read"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::list_edge_functions": [
+  "private_read"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::list_extensions": [
+  "private_read"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::list_migrations": [
+  "private_read"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::list_tables": [
+  "private_read"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::merge_branch": [
+  "none"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::rebase_branch": [
+  "none"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::reset_branch": [
+  "none"
+ ],
+ "42cc8679-f477-4f07-b673-602dcd34db9c::search_docs": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "Claude_Browser::computer": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "Claude_Browser::navigate": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "Claude_Browser::read_console_messages": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "Claude_Browser::read_page": [
+  "untrusted_input"
+ ],
+ "Claude_Browser::resize_window": [
+  "none"
+ ],
+ "Claude_Docs::batch": [
+  "private_read"
+ ],
+ "Claude_Docs::create": [
+  "none"
+ ],
+ "Claude_Docs::query": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "Claude_Docs::read": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "Claude_Docs::update": [
+  "none"
+ ],
+ "Claude_Preview::preview_console_logs": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "Claude_Preview::preview_network": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "Claude_Preview::preview_screenshot": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "Claude_Preview::preview_snapshot": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "Claude_Preview::preview_start": [
+  "none"
+ ],
+ "Claude_Preview::preview_stop": [
+  "none"
+ ],
+ "ElevenLabs::play_audio": [
+  "none"
+ ],
+ "ElevenLabs::text_to_speech": [
+  "exfil_sink"
+ ],
+ "MCP_DOCKER::add_comment_to_pending_review": [
+  "exfil_sink"
+ ],
+ "MCP_DOCKER::get_file_contents": [
+  "private_read"
+ ],
+ "MCP_DOCKER::list_commits": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "MCP_DOCKER::list_pull_requests": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "MCP_DOCKER::pull_request_read": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "MCP_DOCKER::pull_request_review_write": [
+  "exfil_sink"
+ ],
+ "Notion::notion-create-pages": [
+  "exfil_sink"
+ ],
+ "Notion::notion-fetch": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "Notion::notion-move-pages": [
+  "exfil_sink"
+ ],
+ "Notion::notion-search": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "Notion::notion-update-page": [
+  "exfil_sink"
+ ],
+ "Railway::get-deployment-diagnosis": [
+  "private_read"
+ ],
+ "Railway::get-logs": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "Railway::list-deployments": [
+  "private_read"
+ ],
+ "Snyk::snyk_code_scan": [
+  "exfil_sink",
+  "private_read"
+ ],
+ "Snyk::snyk_iac_scan": [
+  "exfil_sink",
+  "private_read"
+ ],
+ "Snyk::snyk_sca_scan": [
+  "private_read"
+ ],
+ "Vercel::deploy_to_vercel": [
+  "exfil_sink"
+ ],
+ "Vercel::get_deployment": [
+  "private_read"
+ ],
+ "Vercel::list_deployments": [
+  "private_read"
+ ],
+ "Vercel::list_projects": [
+  "private_read"
+ ],
+ "XcodeBuildMCP::build_macos": [
+  "private_read"
+ ],
+ "XcodeBuildMCP::build_run_macos": [
+  "private_read"
+ ],
+ "XcodeBuildMCP::launch_mac_app": [
+  "private_read"
+ ],
+ "a1e64602-de39-48a8-9594-462640d77969::complete_upload": [
+  "exfil_sink"
+ ],
+ "a1e64602-de39-48a8-9594-462640d77969::generate_image": [
+  "exfil_sink"
+ ],
+ "a1e64602-de39-48a8-9594-462640d77969::get_task": [
+  "private_read"
+ ],
+ "a1e64602-de39-48a8-9594-462640d77969::init_upload": [
+  "exfil_sink"
+ ],
+ "a1e64602-de39-48a8-9594-462640d77969::list_recent": [
+  "private_read"
+ ],
+ "a1e64602-de39-48a8-9594-462640d77969::show_plans_and_credits": [
+  "private_read"
+ ],
+ "a1e64602-de39-48a8-9594-462640d77969::whoami": [
+  "private_read"
+ ],
+ "aether::edit_skill": [
+  "none"
+ ],
+ "aether::forget": [
+  "none"
+ ],
+ "aether::list_facts": [
+  "none"
+ ],
+ "aether::list_skills": [
+  "none"
+ ],
+ "aether::recall": [
+  "none"
+ ],
+ "aether::remember": [
+  "none"
+ ],
+ "aether::update_user_profile": [
+  "none"
+ ],
+ "agentic-flow::agentdb_pattern_search": [
+  "none"
+ ],
+ "agentic-flow::agentdb_pattern_stats": [
+  "none"
+ ],
+ "agentic-flow::agentdb_pattern_store": [
+  "none"
+ ],
+ "ai-gateway-server::accounts_list": [
+  "private_read"
+ ],
+ "ai-gateway-server::get_log_details": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "ai-gateway-server::get_log_request_body": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "ai-gateway-server::get_log_response_body": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "ai-gateway-server::list_gateways": [
+  "private_read"
+ ],
+ "ai-gateway-server::list_logs": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "ai-gateway-server::set_active_account": [
+  "none"
+ ],
+ "archon::find_documents": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "archon::find_projects": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "archon::find_tasks": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "archon::find_versions": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "archon::get_project_features": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "archon::health_check": [
+  "none"
+ ],
+ "archon::manage_document": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "archon::manage_project": [
+  "private_read"
+ ],
+ "archon::manage_task": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "archon::manage_version": [
+  "private_read"
+ ],
+ "archon::rag_get_available_sources": [
+  "private_read"
+ ],
+ "archon::rag_search_code_examples": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "archon::rag_search_knowledge_base": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "archon::session_info": [
+  "private_read"
+ ],
+ "atlas-aci::graph_query": [
+  "private_read"
+ ],
+ "atlas-aci::list_dir": [
+  "private_read"
+ ],
+ "atlas-aci::memex_read": [
+  "private_read"
+ ],
+ "atlas-aci::search_symbol": [
+  "private_read"
+ ],
+ "atlas-aci::search_text": [
+  "private_read"
+ ],
+ "atlas-aci::view_file": [
+  "private_read"
+ ],
+ "auditlogs-server::accounts_list": [
+  "private_read"
+ ],
+ "auditlogs-server::auditlogs_by_account_id": [
+  "private_read"
+ ],
+ "auditlogs-server::set_active_account": [
+  "none"
+ ],
+ "basic-memory::recent_activity": [
+  "none"
+ ],
+ "basic-memory::search_notes": [
+  "none"
+ ],
+ "basic-memory::write_note": [
+  "none"
+ ],
+ "bindings-server::accounts_list": [
+  "private_read"
+ ],
+ "bindings-server::d1_database_create": [
+  "none"
+ ],
+ "bindings-server::d1_database_delete": [
+  "none"
+ ],
+ "bindings-server::d1_database_get": [
+  "private_read"
+ ],
+ "bindings-server::d1_database_query": [
+  "private_read"
+ ],
+ "bindings-server::d1_databases_list": [
+  "private_read"
+ ],
+ "bindings-server::hyperdrive_config_delete": [
+  "none"
+ ],
+ "bindings-server::hyperdrive_config_edit": [
+  "none"
+ ],
+ "bindings-server::hyperdrive_config_get": [
+  "private_read"
+ ],
+ "bindings-server::hyperdrive_configs_list": [
+  "private_read"
+ ],
+ "bindings-server::kv_namespace_create": [
+  "none"
+ ],
+ "bindings-server::kv_namespace_delete": [
+  "none"
+ ],
+ "bindings-server::kv_namespace_get": [
+  "private_read"
+ ],
+ "bindings-server::kv_namespace_update": [
+  "none"
+ ],
+ "bindings-server::kv_namespaces_list": [
+  "private_read"
+ ],
+ "bindings-server::migrate_pages_to_workers_guide": [
+  "untrusted_input"
+ ],
+ "bindings-server::r2_bucket_create": [
+  "none"
+ ],
+ "bindings-server::r2_bucket_delete": [
+  "none"
+ ],
+ "bindings-server::r2_bucket_get": [
+  "private_read"
+ ],
+ "bindings-server::r2_buckets_list": [
+  "private_read"
+ ],
+ "bindings-server::search_cloudflare_documentation": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "bindings-server::set_active_account": [
+  "none"
+ ],
+ "bindings-server::workers_get_worker": [
+  "private_read"
+ ],
+ "bindings-server::workers_get_worker_code": [
+  "private_read"
+ ],
+ "bindings-server::workers_list": [
+  "private_read"
+ ],
+ "blender-local-agent::check_blender_live_status": [
+  "none"
+ ],
+ "blender::download_polyhaven_asset": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "blender::get_object_info": [
+  "private_read"
+ ],
+ "blender::get_polyhaven_categories": [
+  "untrusted_input"
+ ],
+ "blender::get_polyhaven_status": [
+  "none"
+ ],
+ "blender::get_scene_info": [
+  "private_read"
+ ],
+ "blender::get_viewport_screenshot": [
+  "private_read"
+ ],
+ "blender::search_polyhaven_assets": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "blender::set_texture": [
+  "none"
+ ],
+ "blendy::add_sockets": [
+  "none"
+ ],
+ "blendy::apply_preset": [
+  "none"
+ ],
+ "blendy::apply_take": [
+  "none"
+ ],
+ "blendy::checkpoint": [
+  "none"
+ ],
+ "blendy::checkpoint_model": [
+  "none"
+ ],
+ "blendy::compile_scene": [
+  "none"
+ ],
+ "blendy::dialogue_status": [
+  "private_read"
+ ],
+ "blendy::get_asset_profile": [
+  "private_read"
+ ],
+ "blendy::incident_patterns": [
+  "private_read"
+ ],
+ "blendy::list_clips": [
+  "private_read"
+ ],
+ "blendy::list_incidents": [
+  "private_read"
+ ],
+ "blendy::list_landmarks": [
+  "private_read"
+ ],
+ "blendy::list_models": [
+  "private_read"
+ ],
+ "blendy::list_presets": [
+  "private_read"
+ ],
+ "blendy::list_proposals": [
+  "private_read"
+ ],
+ "blendy::list_takes": [
+  "private_read"
+ ],
+ "blendy::model_profile": [
+  "private_read"
+ ],
+ "blendy::new_model": [
+  "none"
+ ],
+ "blendy::patch_model": [
+  "none"
+ ],
+ "blendy::patch_spec": [
+  "none"
+ ],
+ "blendy::preview_model": [
+  "private_read"
+ ],
+ "blendy::propose_skill_edit": [
+  "none"
+ ],
+ "blendy::read_bible": [
+  "private_read"
+ ],
+ "blendy::read_image": [
+  "private_read"
+ ],
+ "blendy::read_model": [
+  "private_read"
+ ],
+ "blendy::read_script": [
+  "private_read"
+ ],
+ "blendy::read_shot": [
+  "private_read"
+ ],
+ "blendy::read_skill": [
+  "private_read"
+ ],
+ "blendy::read_spec": [
+  "private_read"
+ ],
+ "blendy::resolve_asset": [
+  "private_read"
+ ],
+ "blendy::restore_model": [
+  "none"
+ ],
+ "blendy::search_assets": [
+  "private_read"
+ ],
+ "blendy::write_breakdown": [
+  "none"
+ ],
+ "blendy::write_incident": [
+  "none"
+ ],
+ "blockbench::armorpieces_new": [
+  "none"
+ ],
+ "blockbench::armorpieces_open": [
+  "private_read"
+ ],
+ "blockbench::armorpieces_open_skin": [
+  "private_read"
+ ],
+ "blockbench::armorpieces_paint": [
+  "none"
+ ],
+ "blockbench::armorpieces_pieces": [
+  "private_read"
+ ],
+ "blockbench::armorpieces_save": [
+  "none"
+ ],
+ "blockbench::armorpieces_save_skin": [
+  "none"
+ ],
+ "blockbench::armorpieces_set_part": [
+  "none"
+ ],
+ "blockbench::armorpieces_skin_paint": [
+  "none"
+ ],
+ "blockbench::armorpieces_skin_sheet": [
+  "private_read"
+ ],
+ "blockbench::armorpieces_skins": [
+  "private_read"
+ ],
+ "browser-server::accounts_list": [
+  "private_read"
+ ],
+ "browser-server::get_url_html_content": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "browser-server::get_url_markdown": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "browser-server::get_url_screenshot": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "browser-server::set_active_account": [
+  "none"
+ ],
+ "builds-server::accounts_list": [
+  "private_read"
+ ],
+ "builds-server::set_active_account": [
+  "none"
+ ],
+ "builds-server::workers_builds_get_build": [
+  "private_read"
+ ],
+ "builds-server::workers_builds_get_build_logs": [
+  "private_read"
+ ],
+ "builds-server::workers_builds_list_builds": [
+  "private_read"
+ ],
+ "builds-server::workers_builds_set_active_worker": [
+  "none"
+ ],
+ "builds-server::workers_get_worker": [
+  "private_read"
+ ],
+ "builds-server::workers_get_worker_code": [
+  "private_read"
+ ],
+ "builds-server::workers_list": [
+  "private_read"
+ ],
+ "ccd_session_mgmt::archive_session": [
+  "none"
+ ],
+ "ccd_session_mgmt::list_sessions": [
+  "private_read"
+ ],
+ "chore-list::add_chore": [
+  "none"
+ ],
+ "chore-list::complete_chore": [
+  "none"
+ ],
+ "chore-list::list_chores": [
+  "none"
+ ],
+ "chromadb::chroma_add_documents": [
+  "none"
+ ],
+ "chromadb::chroma_create_collection": [
+  "none"
+ ],
+ "chromadb::chroma_delete_collection": [
+  "none"
+ ],
+ "chromadb::chroma_delete_documents": [
+  "none"
+ ],
+ "chromadb::chroma_get_collection_count": [
+  "private_read"
+ ],
+ "chromadb::chroma_get_collection_info": [
+  "private_read"
+ ],
+ "chromadb::chroma_get_documents": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "chromadb::chroma_list_collections": [
+  "private_read"
+ ],
+ "chromadb::chroma_modify_collection": [
+  "none"
+ ],
+ "chromadb::chroma_peek_collection": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "chromadb::chroma_query_documents": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "chromadb::chroma_update_documents": [
+  "none"
+ ],
+ "chrome-devtools::click": [
+  "exfil_sink"
+ ],
+ "chrome-devtools::close_page": [
+  "none"
+ ],
+ "chrome-devtools::emulate": [
+  "none"
+ ],
+ "chrome-devtools::evaluate_script": [
+  "exfil_sink",
+  "private_read"
+ ],
+ "chrome-devtools::fill": [
+  "exfil_sink"
+ ],
+ "chrome-devtools::fill_form": [
+  "exfil_sink"
+ ],
+ "chrome-devtools::lighthouse_audit": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "chrome-devtools::list_console_messages": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "chrome-devtools::list_network_requests": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "chrome-devtools::navigate_page": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "chrome-devtools::new_page": [
+  "none"
+ ],
+ "chrome-devtools::performance_analyze_insight": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "chrome-devtools::performance_start_trace": [
+  "none"
+ ],
+ "chrome-devtools::performance_stop_trace": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "chrome-devtools::resize_page": [
+  "none"
+ ],
+ "chrome-devtools::take_screenshot": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "chrome-devtools::take_snapshot": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "chrome-devtools::wait_for": [
+  "none"
+ ],
+ "claimflow_context::get_acceptance_criteria": [
+  "private_read"
+ ],
+ "claimflow_context::get_claimflow_rules": [
+  "private_read"
+ ],
+ "claimflow_context::get_verification_trace": [
+  "private_read"
+ ],
+ "claimflow_context::list_stories": [
+  "private_read"
+ ],
+ "claude-flow::coordination_sync": [
+  "none"
+ ],
+ "claude-flow::github_code_review": [
+  "exfil_sink",
+  "private_read"
+ ],
+ "claude-flow::github_issue_track": [
+  "exfil_sink",
+  "private_read",
+  "untrusted_input"
+ ],
+ "claude-flow::github_metrics": [
+  "private_read"
+ ],
+ "claude-flow::github_pr_manage": [
+  "exfil_sink",
+  "private_read",
+  "untrusted_input"
+ ],
+ "claude-flow::github_repo_analyze": [
+  "private_read"
+ ],
+ "claude-flow::github_sync_coord": [
+  "exfil_sink",
+  "private_read"
+ ],
+ "claude-flow::memory_usage": [
+  "private_read"
+ ],
+ "claude-flow::performance_report": [
+  "private_read"
+ ],
+ "claude-flow::swarm_init": [
+  "none"
+ ],
+ "claude-flow::swarm_status": [
+  "none"
+ ],
+ "claude-flow::task_orchestrate": [
+  "none"
+ ],
+ "claude-flow::workflow_create": [
+  "none"
+ ],
+ "claude-flow::workflow_execute": [
+  "none"
+ ],
+ "claude-in-chrome::computer": [
+  "exfil_sink",
+  "private_read",
+  "untrusted_input"
+ ],
+ "claude-in-chrome::find": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "claude-in-chrome::form_input": [
+  "exfil_sink"
+ ],
+ "claude-in-chrome::get_page_text": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "claude-in-chrome::gif_creator": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "claude-in-chrome::javascript_tool": [
+  "exfil_sink",
+  "private_read"
+ ],
+ "claude-in-chrome::navigate": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "claude-in-chrome::read_console_messages": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "claude-in-chrome::read_network_requests": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "claude-in-chrome::read_page": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "claude-in-chrome::resize_window": [
+  "none"
+ ],
+ "claude-in-chrome::tabs_close_mcp": [
+  "none"
+ ],
+ "claude-in-chrome::tabs_context_mcp": [
+  "untrusted_input"
+ ],
+ "claude-in-chrome::tabs_create_mcp": [
+  "none"
+ ],
+ "claude_ai_Claude_Docs::create": [
+  "exfil_sink"
+ ],
+ "claude_ai_Claude_Docs::query": [
+  "private_read"
+ ],
+ "claude_ai_Claude_Docs::read": [
+  "private_read"
+ ],
+ "claude_ai_Claude_Docs::update": [
+  "exfil_sink"
+ ],
+ "claude_ai_Linear::get_issue": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "claude_ai_Linear::list_comments": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "claude_ai_Mermaid_Chart::validate_and_render_mermaid_diagram": [
+  "none"
+ ],
+ "claude_ai_Notion::notion-create-database": [
+  "exfil_sink"
+ ],
+ "claude_ai_Notion::notion-create-pages": [
+  "exfil_sink"
+ ],
+ "claude_ai_Notion::notion-create-view": [
+  "exfil_sink"
+ ],
+ "claude_ai_Notion::notion-duplicate-page": [
+  "exfil_sink"
+ ],
+ "claude_ai_Notion::notion-fetch": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "claude_ai_Notion::notion-search": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "claude_ai_Notion::notion-update-page": [
+  "exfil_sink"
+ ],
+ "claude_ai_Vercel::add_toolbar_reaction": [
+  "exfil_sink"
+ ],
+ "claude_ai_Vercel::change_toolbar_thread_resolve_status": [
+  "exfil_sink"
+ ],
+ "claude_ai_Vercel::check_domain_availability_and_price": [
+  "exfil_sink"
+ ],
+ "claude_ai_Vercel::deploy_to_vercel": [
+  "exfil_sink"
+ ],
+ "claude_ai_Vercel::edit_toolbar_message": [
+  "exfil_sink"
+ ],
+ "claude_ai_Vercel::get_deployment": [
+  "private_read"
+ ],
+ "claude_ai_Vercel::get_deployment_build_logs": [
+  "private_read"
+ ],
+ "claude_ai_Vercel::get_project": [
+  "private_read"
+ ],
+ "claude_ai_Vercel::get_runtime_logs": [
+  "private_read"
+ ],
+ "claude_ai_Vercel::get_toolbar_thread": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "claude_ai_Vercel::list_deployments": [
+  "private_read"
+ ],
+ "claude_ai_Vercel::list_projects": [
+  "private_read"
+ ],
+ "claude_ai_Vercel::list_teams": [
+  "private_read"
+ ],
+ "claude_ai_Vercel::list_toolbar_threads": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "claude_ai_Vercel::reply_to_toolbar_thread": [
+  "exfil_sink"
+ ],
+ "claude_ai_Vercel::search_vercel_documentation": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "claude_ai_Vercel::web_fetch_vercel_url": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "claude_design::ack_comments": [
+  "exfil_sink"
+ ],
+ "claude_design::copy_files": [
+  "exfil_sink"
+ ],
+ "claude_design::create_project": [
+  "exfil_sink"
+ ],
+ "claude_design::delete_files": [
+  "none"
+ ],
+ "claude_design::finalize_plan": [
+  "exfil_sink"
+ ],
+ "claude_design::get_claude_design_prompt": [
+  "private_read"
+ ],
+ "claude_design::get_project": [
+  "private_read"
+ ],
+ "claude_design::list_comments": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "claude_design::list_design_systems": [
+  "private_read"
+ ],
+ "claude_design::list_files": [
+  "private_read"
+ ],
+ "claude_design::list_projects": [
+  "private_read"
+ ],
+ "claude_design::read_design_skill": [
+  "private_read"
+ ],
+ "claude_design::read_file": [
+  "private_read"
+ ],
+ "claude_design::render_preview": [
+  "none"
+ ],
+ "claude_design::write_files": [
+  "exfil_sink"
+ ],
+ "cloudflare-docs::search_cloudflare_documentation": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "code-cortex-mcp::get_architecture": [
+  "private_read"
+ ],
+ "code-cortex-mcp::get_code_snippet": [
+  "private_read"
+ ],
+ "code-cortex-mcp::get_graph_schema": [
+  "private_read"
+ ],
+ "code-cortex-mcp::index_repository": [
+  "private_read"
+ ],
+ "code-cortex-mcp::index_status": [
+  "none"
+ ],
+ "code-cortex-mcp::list_projects": [
+  "private_read"
+ ],
+ "code-cortex-mcp::query_graph": [
+  "private_read"
+ ],
+ "code-cortex-mcp::search_code": [
+  "private_read"
+ ],
+ "code-cortex-mcp::search_graph": [
+  "private_read"
+ ],
+ "code-cortex-mcp::trace_path": [
+  "private_read"
+ ],
+ "code-review-graph::detect_changes_tool": [
+  "private_read"
+ ],
+ "code-review-graph::get_affected_flows_tool": [
+  "private_read"
+ ],
+ "code-review-graph::get_architecture_overview_tool": [
+  "private_read"
+ ],
+ "code-review-graph::get_impact_radius_tool": [
+  "private_read"
+ ],
+ "code-review-graph::get_review_context_tool": [
+  "private_read"
+ ],
+ "code-review-graph::list_communities_tool": [
+  "private_read"
+ ],
+ "code-review-graph::query_graph_tool": [
+  "private_read"
+ ],
+ "code-review-graph::semantic_search_nodes_tool": [
+  "private_read"
+ ],
+ "code-search::semantic_code_search": [
+  "private_read"
+ ],
+ "codegraph::codegraph_callers": [
+  "private_read"
+ ],
+ "codegraph::codegraph_context": [
+  "private_read"
+ ],
+ "codegraph::codegraph_explore": [
+  "private_read"
+ ],
+ "codegraph::codegraph_impact": [
+  "private_read"
+ ],
+ "codegraph::codegraph_search": [
+  "private_read"
+ ],
+ "cognee-agent-teams::codify": [
+  "none"
+ ],
+ "cognee-agent-teams::cognify": [
+  "none"
+ ],
+ "cognee-agent-teams::delete": [
+  "none"
+ ],
+ "cognee-agent-teams::get_developer_rules": [
+  "none"
+ ],
+ "cognee-agent-teams::list_data": [
+  "none"
+ ],
+ "cognee-agent-teams::prune": [
+  "none"
+ ],
+ "cognee-agent-teams::save_interaction": [
+  "none"
+ ],
+ "cognee-agent-teams::search": [
+  "none"
+ ],
+ "containers-server::container_file_delete": [
+  "none"
+ ],
+ "containers-server::container_file_read": [
+  "none"
+ ],
+ "containers-server::container_file_write": [
+  "none"
+ ],
+ "containers-server::container_files_list": [
+  "none"
+ ],
+ "containers-server::container_initialize": [
+  "none"
+ ],
+ "containers-server::container_ping": [
+  "none"
+ ],
+ "context7::get-library-docs": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "custom-tools::search_gif": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "deepseek::chat_completion": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "deepwiki-server::ask_question": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "deepwiki-server::read_wiki_contents": [
+  "untrusted_input"
+ ],
+ "deepwiki-server::read_wiki_structure": [
+  "untrusted_input"
+ ],
+ "djmate-db::execute_sql": [
+  "private_read"
+ ],
+ "djmate-db::list_extensions": [
+  "private_read"
+ ],
+ "djmate-db::list_migrations": [
+  "private_read"
+ ],
+ "djmate-db::list_tables": [
+  "private_read"
+ ],
+ "dns-analytics-server::accounts_list": [
+  "private_read"
+ ],
+ "dns-analytics-server::dns_report": [
+  "private_read"
+ ],
+ "dns-analytics-server::set_active_account": [
+  "none"
+ ],
+ "dns-analytics-server::show_account_dns_settings": [
+  "private_read"
+ ],
+ "dns-analytics-server::show_zone_dns_settings": [
+  "private_read"
+ ],
+ "dns-analytics-server::zone_details": [
+  "private_read"
+ ],
+ "dns-analytics-server::zones_list": [
+  "private_read"
+ ],
+ "docs-server::migrate_pages_to_workers_guide": [
+  "untrusted_input"
+ ],
+ "docs-server::search_cloudflare_documentation": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "droidrun::back": [
+  "none"
+ ],
+ "droidrun::device_info": [
+  "private_read"
+ ],
+ "droidrun::home": [
+  "none"
+ ],
+ "droidrun::text": [
+  "exfil_sink"
+ ],
+ "droidrun::ui": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "exa::crawling": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "exa::get_code_context_exa": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "exa::linkedin_search": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "exa::web_search_exa": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "fc7fef9c-6152-48d4-80c8-ff4e20e90841::create_design_system_rules": [
+  "none"
+ ],
+ "fc7fef9c-6152-48d4-80c8-ff4e20e90841::get_code_connect_map": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "fc7fef9c-6152-48d4-80c8-ff4e20e90841::get_design_context": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "fc7fef9c-6152-48d4-80c8-ff4e20e90841::get_libraries": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "fc7fef9c-6152-48d4-80c8-ff4e20e90841::get_metadata": [
+  "private_read"
+ ],
+ "fc7fef9c-6152-48d4-80c8-ff4e20e90841::get_screenshot": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "fc7fef9c-6152-48d4-80c8-ff4e20e90841::get_variable_defs": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "fc7fef9c-6152-48d4-80c8-ff4e20e90841::search_design_system": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "figma-desktop::get_design_context": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "figma-desktop::get_metadata": [
+  "private_read"
+ ],
+ "figma-desktop::get_screenshot": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "figma-remote-mcp::get_design_context": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "figma-remote-mcp::get_metadata": [
+  "private_read"
+ ],
+ "figma-remote-mcp::get_screenshot": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "firecrawl-mcp::firecrawl_scrape": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "firecrawl-mcp::firecrawl_search": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "github-scout::get_readme": [
+  "untrusted_input"
+ ],
+ "github-scout::list_releases": [
+  "untrusted_input"
+ ],
+ "github-scout::search_repositories": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "github::actions_get": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "github::actions_list": [
+  "private_read"
+ ],
+ "github::add_pull_request_review_comment_to_pending_review": [
+  "exfil_sink"
+ ],
+ "github::assign_copilot_to_issue": [
+  "exfil_sink"
+ ],
+ "github::cancel_workflow_run": [
+  "none"
+ ],
+ "github::close_issue": [
+  "none"
+ ],
+ "github::create_and_submit_pull_request_review": [
+  "exfil_sink"
+ ],
+ "github::create_issue_comment": [
+  "exfil_sink"
+ ],
+ "github::create_pending_pull_request_review": [
+  "none"
+ ],
+ "github::create_pr_comment": [
+  "exfil_sink"
+ ],
+ "github::create_workflow": [
+  "exfil_sink"
+ ],
+ "github::create_workflow_dispatch": [
+  "exfil_sink"
+ ],
+ "github::delete_file": [
+  "none"
+ ],
+ "github::delete_pending_pull_request_review": [
+  "none"
+ ],
+ "github::delete_workflow_run_logs": [
+  "none"
+ ],
+ "github::dismiss_notification": [
+  "none"
+ ],
+ "github::download_workflow_run_artifact": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "github::get_check_run": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "github::get_check_runs": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "github::get_code_scanning_alert": [
+  "private_read"
+ ],
+ "github::get_commit": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "github::get_issue_comments": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "github::get_job_logs": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "github::get_latest_release": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "github::get_me": [
+  "private_read"
+ ],
+ "github::get_notification_details": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "github::get_pr_diff": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "github::get_pull_request_diff": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "github::get_release_by_tag": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "github::get_secret_scanning_alert": [
+  "private_read"
+ ],
+ "github::get_tag": [
+  "private_read"
+ ],
+ "github::get_workflow_run": [
+  "private_read"
+ ],
+ "github::get_workflow_run_logs": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "github::get_workflow_run_usage": [
+  "private_read"
+ ],
+ "github::get_workflow_runs": [
+  "private_read"
+ ],
+ "github::list_branches": [
+  "private_read"
+ ],
+ "github::list_code_scanning_alerts": [
+  "private_read"
+ ],
+ "github::list_gists": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "github::list_notifications": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "github::list_repositories": [
+  "private_read"
+ ],
+ "github::list_secret_scanning_alerts": [
+  "private_read"
+ ],
+ "github::list_tags": [
+  "private_read"
+ ],
+ "github::list_workflow_jobs": [
+  "private_read"
+ ],
+ "github::list_workflow_run_artifacts": [
+  "private_read"
+ ],
+ "github::list_workflow_runs": [
+  "private_read"
+ ],
+ "github::list_workflows": [
+  "private_read"
+ ],
+ "github::manage_notification_subscription": [
+  "exfil_sink"
+ ],
+ "github::manage_repository_notification_subscription": [
+  "exfil_sink"
+ ],
+ "github::mark_all_notifications_read": [
+  "exfil_sink"
+ ],
+ "github::pull_request_read": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "github::request_copilot_review": [
+  "exfil_sink"
+ ],
+ "github::rerun_failed_jobs": [
+  "exfil_sink"
+ ],
+ "github::rerun_workflow_run": [
+  "exfil_sink"
+ ],
+ "github::run_workflow": [
+  "exfil_sink"
+ ],
+ "github::search_orgs": [
+  "exfil_sink",
+  "private_read"
+ ],
+ "github::search_pull_requests": [
+  "exfil_sink",
+  "private_read",
+  "untrusted_input"
+ ],
+ "github::search_repos": [
+  "exfil_sink",
+  "private_read"
+ ],
+ "github::submit_pending_pull_request_review": [
+  "exfil_sink"
+ ],
+ "github::subscribe_pr_activity": [
+  "exfil_sink"
+ ],
+ "github::unsubscribe_pr_activity": [
+  "exfil_sink"
+ ],
+ "github::update_pull_request": [
+  "exfil_sink"
+ ],
+ "github::update_workflow": [
+  "exfil_sink"
+ ],
+ "gitlab::close_issue": [
+  "exfil_sink"
+ ],
+ "gitlab::create_issue": [
+  "exfil_sink"
+ ],
+ "gitlab::create_merge_request": [
+  "exfil_sink"
+ ],
+ "gitlab::get_issue": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "gitlab::list_issues": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "gitlab::update_issue": [
+  "exfil_sink"
+ ],
+ "godot::get_debug_output": [
+  "private_read"
+ ],
+ "godot::get_project_info": [
+  "private_read"
+ ],
+ "godot::get_scene_tree": [
+  "private_read"
+ ],
+ "godot::get_ui_elements": [
+  "private_read"
+ ],
+ "godot::manage_scene": [
+  "none"
+ ],
+ "godot::run_project": [
+  "none"
+ ],
+ "godot::run_script": [
+  "none"
+ ],
+ "godot::simulate_input": [
+  "none"
+ ],
+ "godot::stop_project": [
+  "none"
+ ],
+ "godot::take_screenshot": [
+  "private_read"
+ ],
+ "grafana::get_trace": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "grafana::list_loki_label_names": [
+  "private_read"
+ ],
+ "grafana::list_loki_label_values": [
+  "private_read"
+ ],
+ "grafana::list_prometheus_label_names": [
+  "private_read"
+ ],
+ "grafana::list_prometheus_label_values": [
+  "private_read"
+ ],
+ "grafana::list_prometheus_metric_metadata": [
+  "private_read"
+ ],
+ "grafana::query_loki_logs": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "grafana::query_loki_stats": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "grafana::query_prometheus": [
+  "private_read"
+ ],
+ "grafana::query_tempo_search": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "graphql-server::accounts_list": [
+  "private_read"
+ ],
+ "graphql-server::graphql_api_explorer": [
+  "private_read"
+ ],
+ "graphql-server::graphql_complete_schema": [
+  "private_read"
+ ],
+ "graphql-server::graphql_query": [
+  "private_read"
+ ],
+ "graphql-server::graphql_schema_overview": [
+  "private_read"
+ ],
+ "graphql-server::graphql_schema_search": [
+  "private_read"
+ ],
+ "graphql-server::graphql_type_details": [
+  "private_read"
+ ],
+ "graphql-server::zone_details": [
+  "private_read"
+ ],
+ "graphql-server::zones_list": [
+  "private_read"
+ ],
+ "gsc-mcp::ai_overviews_impact": [
+  "private_read"
+ ],
+ "gsc-mcp::analytics_anomalies": [
+  "private_read"
+ ],
+ "gsc-mcp::batch_url_inspection": [
+  "private_read"
+ ],
+ "gsc-mcp::check_alerts": [
+  "private_read"
+ ],
+ "gsc-mcp::check_indexing_issues": [
+  "private_read"
+ ],
+ "gsc-mcp::compare_search_periods": [
+  "private_read"
+ ],
+ "gsc-mcp::content_brief": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "gsc-mcp::crux_page_vitals": [
+  "none"
+ ],
+ "gsc-mcp::get_advanced_search_analytics": [
+  "private_read"
+ ],
+ "gsc-mcp::get_performance_overview": [
+  "private_read"
+ ],
+ "gsc-mcp::get_search_analytics": [
+  "private_read"
+ ],
+ "gsc-mcp::get_search_by_page_query": [
+  "private_read"
+ ],
+ "gsc-mcp::indexing_evidence_matrix": [
+  "private_read"
+ ],
+ "gsc-mcp::inspect_url": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "gsc-mcp::list_properties": [
+  "private_read"
+ ],
+ "gsc-mcp::list_sitemaps": [
+  "private_read"
+ ],
+ "gsc-mcp::page_analysis": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "gsc-mcp::page_health_score": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "gsc-mcp::page_technical_audit": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "gsc-mcp::quick_wins": [
+  "private_read"
+ ],
+ "gsc-mcp::search_change_breakdown": [
+  "private_read"
+ ],
+ "gsc-mcp::seo_cannibalization": [
+  "private_read"
+ ],
+ "gsc-mcp::seo_lost_queries": [
+  "private_read"
+ ],
+ "gsc-mcp::seo_striking_distance": [
+  "private_read"
+ ],
+ "gsc-mcp::sitemap_audit": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "gsc-mcp::traffic_drops": [
+  "private_read"
+ ],
+ "gsc-mcp::traffic_health_check": [
+  "private_read"
+ ],
+ "handoff::handoff_get_task": [
+  "none"
+ ],
+ "handoff::handoff_list_tasks": [
+  "none"
+ ],
+ "handoff::handoff_push_plan": [
+  "none"
+ ],
+ "handoff::handoff_sync_status": [
+  "none"
+ ],
+ "handoff::handoff_update_task": [
+  "none"
+ ],
+ "hivemind::hivemind_code_at": [
+  "private_read"
+ ],
+ "hivemind::hivemind_code_timeline": [
+  "private_read"
+ ],
+ "hivemind::hivemind_ingest_code": [
+  "none"
+ ],
+ "hivemind::hivemind_log_decision": [
+  "none"
+ ],
+ "hivemind::hivemind_recall": [
+  "private_read"
+ ],
+ "hivemind::hivemind_recall_bugs": [
+  "private_read"
+ ],
+ "hivemind::hivemind_save_conversation": [
+  "none"
+ ],
+ "hivemind::hivemind_save_memory": [
+  "none"
+ ],
+ "hivemind::hivemind_test_coverage": [
+  "private_read"
+ ],
+ "hivemind::hivemind_track_refactor": [
+  "none"
+ ],
+ "hivemind::hivemind_traverse_graph": [
+  "private_read"
+ ],
+ "hivemind::hivemind_why_code": [
+  "private_read"
+ ],
+ "ide::getDiagnostics": [
+  "private_read"
+ ],
+ "invencible-memory::memory_recall": [
+  "none"
+ ],
+ "invencible-memory::memory_save": [
+  "none"
+ ],
+ "invencible-memory::memory_search": [
+  "none"
+ ],
+ "ios-simulator::get_booted_sim_id": [
+  "none"
+ ],
+ "ios-simulator::install_app": [
+  "none"
+ ],
+ "ios-simulator::launch_app": [
+  "none"
+ ],
+ "ios-simulator::open_simulator": [
+  "none"
+ ],
+ "ios-simulator::record_video": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "ios-simulator::screenshot": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "ios-simulator::stop_recording": [
+  "none"
+ ],
+ "ios-simulator::ui_describe_all": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "ios-simulator::ui_describe_point": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "ios-simulator::ui_find_element": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "ios-simulator::ui_swipe": [
+  "none"
+ ],
+ "ios-simulator::ui_tap": [
+  "none"
+ ],
+ "ios-simulator::ui_type": [
+  "none"
+ ],
+ "ios-simulator::ui_view": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "jira::jira_comments": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "jira::jira_issues": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "jira::jira_search": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "kapture::navigate": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "kapture::screenshot": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "langchain-prompts::compare_prompts": [
+  "untrusted_input"
+ ],
+ "langchain-prompts::get_popular_prompts": [
+  "untrusted_input"
+ ],
+ "langchain-prompts::get_prompt": [
+  "untrusted_input"
+ ],
+ "langchain-prompts::get_prompt_completions": [
+  "untrusted_input"
+ ],
+ "langchain-prompts::get_prompt_content": [
+  "untrusted_input"
+ ],
+ "langchain-prompts::get_prompt_statistics": [
+  "none"
+ ],
+ "langchain-prompts::get_prompt_versions": [
+  "untrusted_input"
+ ],
+ "langchain-prompts::get_user_prompts": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "langchain-prompts::like_prompt": [
+  "exfil_sink"
+ ],
+ "langchain-prompts::list_prompts": [
+  "untrusted_input"
+ ],
+ "langchain-prompts::search_prompts": [
+  "untrusted_input"
+ ],
+ "langchain-prompts::unlike_prompt": [
+  "exfil_sink"
+ ],
+ "langchain-prompts::validate_prompt": [
+  "untrusted_input"
+ ],
+ "langsmith::fetch_trace": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "langsmith::get_project_runs_stats": [
+  "private_read"
+ ],
+ "langsmith::get_prompt_by_name": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "langsmith::get_thread_history": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "langsmith::list_datasets": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "langsmith::list_examples": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "langsmith::list_prompts": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "langsmith::read_dataset": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "langsmith::read_example": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "lean-ctx::ctx_compose": [
+  "private_read"
+ ],
+ "lean-ctx::ctx_glob": [
+  "private_read"
+ ],
+ "lean-ctx::ctx_patch": [
+  "none"
+ ],
+ "lean-ctx::ctx_read": [
+  "private_read"
+ ],
+ "lean-ctx::ctx_search": [
+  "private_read"
+ ],
+ "lean-ctx::ctx_shell": [
+  "exfil_sink",
+  "private_read"
+ ],
+ "lean-ctx::ctx_tree": [
+  "private_read"
+ ],
+ "linear-server::create_comment": [
+  "exfil_sink"
+ ],
+ "linear-server::create_issue": [
+  "exfil_sink"
+ ],
+ "linear-server::create_project": [
+  "exfil_sink"
+ ],
+ "linear-server::get_document": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "linear-server::get_issue": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "linear-server::get_issue_status": [
+  "private_read"
+ ],
+ "linear-server::get_project": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "linear-server::get_team": [
+  "private_read"
+ ],
+ "linear-server::get_user": [
+  "private_read"
+ ],
+ "linear-server::list_comments": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "linear-server::list_cycles": [
+  "private_read"
+ ],
+ "linear-server::list_documents": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "linear-server::list_issue_labels": [
+  "private_read"
+ ],
+ "linear-server::list_issue_statuses": [
+  "private_read"
+ ],
+ "linear-server::list_issues": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "linear-server::list_my_issues": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "linear-server::list_project_labels": [
+  "private_read"
+ ],
+ "linear-server::list_projects": [
+  "private_read"
+ ],
+ "linear-server::list_teams": [
+  "private_read"
+ ],
+ "linear-server::list_users": [
+  "private_read"
+ ],
+ "linear-server::search_documentation": [
+  "untrusted_input"
+ ],
+ "linear-server::update_issue": [
+  "exfil_sink"
+ ],
+ "linear-server::update_project": [
+  "exfil_sink"
+ ],
+ "linear::get_issue": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "linear::get_issue_status": [
+  "private_read"
+ ],
+ "linear::get_project": [
+  "private_read"
+ ],
+ "linear::list_comments": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "linear::list_issue_statuses": [
+  "private_read"
+ ],
+ "linear::list_issues": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "linear::list_projects": [
+  "private_read"
+ ],
+ "linear::save_comment": [
+  "exfil_sink"
+ ],
+ "linear::save_issue": [
+  "exfil_sink"
+ ],
+ "linear::save_project": [
+  "exfil_sink"
+ ],
+ "lleo::lleo_air_quality": [
+  "exfil_sink"
+ ],
+ "lleo::lleo_animation": [
+  "exfil_sink"
+ ],
+ "lleo::lleo_business": [
+  "exfil_sink"
+ ],
+ "lleo::lleo_ndvi": [
+  "exfil_sink"
+ ],
+ "lleo::lleo_water_quality": [
+  "exfil_sink"
+ ],
+ "lleo::lleo_weather": [
+  "exfil_sink"
+ ],
+ "local-machine-access::check_ports": [
+  "private_read"
+ ],
+ "local-machine-access::fetch_localhost": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "local-rag::ingest_file": [
+  "none"
+ ],
+ "local-rag::list_files": [
+  "private_read"
+ ],
+ "local-rag::query_documents": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "local-rag::read_chunk_neighbors": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "local-rag::status": [
+  "none"
+ ],
+ "logs-server::accounts_list": [
+  "private_read"
+ ],
+ "logs-server::logpush_jobs_by_account_id": [
+  "private_read"
+ ],
+ "magic::21st_magic_component_builder": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "magic::21st_magic_component_inspiration": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "magic::21st_magic_component_refiner": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "magic::logo_search": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "mcp-server-firecrawl::firecrawl_crawl": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "mcp-server-firecrawl::firecrawl_deep_research": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "mcp-server-firecrawl::firecrawl_extract": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "mcp-server-firecrawl::firecrawl_search": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "mcptoolkit::add_group": [
+  "none"
+ ],
+ "mcptoolkit::capture_screenshot": [
+  "private_read"
+ ],
+ "mcptoolkit::get_project_info": [
+  "private_read"
+ ],
+ "mcptoolkit::get_texture": [
+  "private_read"
+ ],
+ "mcptoolkit::get_undo_stack": [
+  "private_read"
+ ],
+ "mcptoolkit::inspect": [
+  "private_read"
+ ],
+ "mcptoolkit::list_outline": [
+  "private_read"
+ ],
+ "mcptoolkit::list_textures": [
+  "private_read"
+ ],
+ "mcptoolkit::modify_cube": [
+  "none"
+ ],
+ "mcptoolkit::place_cube": [
+  "none"
+ ],
+ "mcptoolkit::texture": [
+  "none"
+ ],
+ "mcptoolkit::undo": [
+  "none"
+ ],
+ "mem0-mcp::add_memory": [
+  "none"
+ ],
+ "mem0-mcp::get_memories": [
+  "none"
+ ],
+ "mem0-mcp::get_memory": [
+  "none"
+ ],
+ "mem0-mcp::search_memories": [
+  "none"
+ ],
+ "mem0-mcp::update_memory": [
+  "none"
+ ],
+ "microsoft-learn::microsoft_code_sample_search": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "microsoft-learn::microsoft_docs_fetch": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "microsoft-learn::microsoft_docs_search": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "minsky::git_blame": [
+  "private_read"
+ ],
+ "minsky::git_diff": [
+  "private_read"
+ ],
+ "minsky::git_log": [
+  "private_read"
+ ],
+ "minsky::git_status": [
+  "private_read"
+ ],
+ "minsky::session_pr_review_context": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "minsky::session_pr_review_submit": [
+  "exfil_sink"
+ ],
+ "minsky::tasks_get": [
+  "private_read"
+ ],
+ "minsky::tasks_spec_get": [
+  "private_read"
+ ],
+ "mobai::get_device": [
+  "private_read"
+ ],
+ "mobai::get_screenshot": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "mobai::install_app": [
+  "none"
+ ],
+ "mobai::list_apps": [
+  "private_read"
+ ],
+ "mobai::list_devices": [
+  "private_read"
+ ],
+ "mobai::save_screenshot": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "mobile-mcp::mobile_click_on_screen_at_coordinates": [
+  "none"
+ ],
+ "mobile-mcp::mobile_launch_app": [
+  "none"
+ ],
+ "mobile-mcp::mobile_list_apps": [
+  "private_read"
+ ],
+ "mobile-mcp::mobile_list_available_devices": [
+  "private_read"
+ ],
+ "mobile-mcp::mobile_list_elements_on_screen": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "mobile-mcp::mobile_swipe_on_screen": [
+  "none"
+ ],
+ "mobile-mcp::mobile_take_screenshot": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "mobile-mcp::mobile_type_keys": [
+  "exfil_sink"
+ ],
+ "neo4j-cypher::read_neo4j_cypher": [
+  "private_read"
+ ],
+ "neo4j::get_neo4j_schema": [
+  "private_read"
+ ],
+ "neo4j::read_neo4j_cypher": [
+  "private_read"
+ ],
+ "neo4j::write_neo4j_cypher": [
+  "none"
+ ],
+ "notebooklm::list_notebooks": [
+  "private_read"
+ ],
+ "notebooklm::notebook_ask": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "observability-server::accounts_list": [
+  "private_read"
+ ],
+ "observability-server::migrate_pages_to_workers_guide": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "observability-server::observability_keys": [
+  "private_read"
+ ],
+ "observability-server::observability_values": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "observability-server::query_worker_observability": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "observability-server::search_cloudflare_documentation": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "observability-server::set_active_account": [
+  "none"
+ ],
+ "observability-server::workers_get_worker": [
+  "private_read"
+ ],
+ "observability-server::workers_get_worker_code": [
+  "private_read"
+ ],
+ "observability-server::workers_list": [
+  "private_read"
+ ],
+ "obsidian-mcp::list_notes": [
+  "private_read"
+ ],
+ "obsidian-mcp::read_multiple_notes": [
+  "private_read"
+ ],
+ "obsidian-mcp::read_note": [
+  "private_read"
+ ],
+ "obsidian-mcp::search_vault": [
+  "private_read"
+ ],
+ "octocode::githubGetFileContent": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "octocode::githubSearchCode": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "octocode::localGetFileContent": [
+  "private_read"
+ ],
+ "octocode::localSearchCode": [
+  "private_read"
+ ],
+ "ontology-atlas::find_backlinks": [
+  "none"
+ ],
+ "ontology-atlas::get_concept": [
+  "none"
+ ],
+ "ontology-atlas::get_concepts": [
+  "none"
+ ],
+ "ontology-atlas::list_concepts": [
+  "none"
+ ],
+ "ontology-atlas::list_kinds": [
+  "none"
+ ],
+ "oracle_lane_broker::canonical_audit": [
+  "none"
+ ],
+ "oracle_lane_broker::canonical_discard": [
+  "none"
+ ],
+ "oracle_lane_broker::canonical_finalize": [
+  "none"
+ ],
+ "oracle_lane_broker::commit_inspect": [
+  "private_read"
+ ],
+ "oracle_lane_broker::lane_commit": [
+  "none"
+ ],
+ "oracle_lane_broker::lane_integrate": [
+  "none"
+ ],
+ "oracle_lane_broker::lane_open": [
+  "none"
+ ],
+ "oracle_lane_broker::lane_quarantine": [
+  "none"
+ ],
+ "oracle_lane_broker::lane_release": [
+  "none"
+ ],
+ "oracle_lane_broker::patch_apply": [
+  "none"
+ ],
+ "oracle_lane_broker::recovery_result": [
+  "none"
+ ],
+ "oracle_lane_broker::ref_resolve": [
+  "private_read"
+ ],
+ "oracle_lane_broker::repo_read": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "oracle_lane_broker::repo_search": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "oracle_lane_broker::workspace_list": [
+  "none"
+ ],
+ "otto::fleet_assign": [
+  "none"
+ ],
+ "otto::fleet_list_available": [
+  "private_read"
+ ],
+ "otto::geocode_geocode": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "otto::notify_send": [
+  "exfil_sink"
+ ],
+ "otto::payments_charge": [
+  "exfil_sink"
+ ],
+ "otto::payments_refund": [
+  "exfil_sink"
+ ],
+ "otto::routing_directions": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "otto::routing_matrix": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "otto::state_read": [
+  "private_read"
+ ],
+ "otto::state_write": [
+  "none"
+ ],
+ "otto::telemetry_position": [
+  "private_read"
+ ],
+ "otto::traffic_current": [
+  "untrusted_input"
+ ],
+ "otto::vrp_solve": [
+  "none"
+ ],
+ "paper-insights::get_citation": [
+  "untrusted_input"
+ ],
+ "paper-insights::get_paper": [
+  "untrusted_input"
+ ],
+ "paper-insights::get_passage": [
+  "untrusted_input"
+ ],
+ "paper-insights::search_papers": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "paper-insights::search_passages": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "peekaboo::click": [
+  "exfil_sink"
+ ],
+ "peekaboo::hotkey": [
+  "exfil_sink"
+ ],
+ "peekaboo::image": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "peekaboo::list": [
+  "private_read"
+ ],
+ "peekaboo::scroll": [
+  "exfil_sink"
+ ],
+ "peekaboo::see": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "peekaboo::type": [
+  "exfil_sink"
+ ],
+ "peekaboo::window": [
+  "private_read"
+ ],
+ "perplexity-ask::perplexity_ask": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "perplexity::perplexity_search": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "petclinic-mcp::call_vet_ambulance": [
+  "exfil_sink"
+ ],
+ "petclinic-mcp::cancel_visit": [
+  "none"
+ ],
+ "petclinic-mcp::create_visit": [
+  "none"
+ ],
+ "petclinic-mcp::get_owner_profile": [
+  "private_read"
+ ],
+ "petclinic-mcp::list_visits": [
+  "private_read"
+ ],
+ "playwright-test::browser_click": [
+  "exfil_sink"
+ ],
+ "playwright-test::browser_close": [
+  "none"
+ ],
+ "playwright-test::browser_console_messages": [
+  "untrusted_input"
+ ],
+ "playwright-test::browser_drag": [
+  "exfil_sink"
+ ],
+ "playwright-test::browser_evaluate": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "playwright-test::browser_file_upload": [
+  "exfil_sink"
+ ],
+ "playwright-test::browser_fill_form": [
+  "exfil_sink"
+ ],
+ "playwright-test::browser_generate_locator": [
+  "none"
+ ],
+ "playwright-test::browser_hover": [
+  "none"
+ ],
+ "playwright-test::browser_navigate": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "playwright-test::browser_navigate_back": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "playwright-test::browser_network_request": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "playwright-test::browser_network_requests": [
+  "untrusted_input"
+ ],
+ "playwright-test::browser_press_key": [
+  "exfil_sink"
+ ],
+ "playwright-test::browser_resize": [
+  "none"
+ ],
+ "playwright-test::browser_resume": [
+  "none"
+ ],
+ "playwright-test::browser_run_code": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "playwright-test::browser_run_code_unsafe": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "playwright-test::browser_select_option": [
+  "exfil_sink"
+ ],
+ "playwright-test::browser_snapshot": [
+  "untrusted_input"
+ ],
+ "playwright-test::browser_take_screenshot": [
+  "untrusted_input"
+ ],
+ "playwright-test::browser_type": [
+  "exfil_sink"
+ ],
+ "playwright-test::browser_verify_element_visible": [
+  "none"
+ ],
+ "playwright-test::browser_verify_list_visible": [
+  "none"
+ ],
+ "playwright-test::browser_verify_text_visible": [
+  "none"
+ ],
+ "playwright-test::browser_verify_value": [
+  "none"
+ ],
+ "playwright-test::browser_wait_for": [
+  "none"
+ ],
+ "playwright-test::generator_read_log": [
+  "none"
+ ],
+ "playwright-test::generator_write_test": [
+  "none"
+ ],
+ "playwright-test::planner_save_plan": [
+  "none"
+ ],
+ "playwright-test::test_debug": [
+  "none"
+ ],
+ "playwright-test::test_list": [
+  "none"
+ ],
+ "playwright-test::test_run": [
+  "none"
+ ],
+ "playwright::assertions": [
+  "none"
+ ],
+ "playwright::browser_fill": [
+  "exfil_sink"
+ ],
+ "playwright::browser_install": [
+  "none"
+ ],
+ "playwright::browser_run_code": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "playwright::browser_screenshot": [
+  "untrusted_input"
+ ],
+ "plexora::gating_answer": [
+  "none"
+ ],
+ "plexora::gating_session_status": [
+  "none"
+ ],
+ "plexora::object_review_answer": [
+  "none"
+ ],
+ "plexora::object_review_status": [
+  "none"
+ ],
+ "plexora::qc_answer": [
+  "none"
+ ],
+ "plexora::qc_session_status": [
+  "none"
+ ],
+ "plexora::read_skill": [
+  "private_read"
+ ],
+ "plugin_chrome-devtools-mcp_chrome-devtools::emulate": [
+  "none"
+ ],
+ "plugin_chrome-devtools-mcp_chrome-devtools::lighthouse_audit": [
+  "untrusted_input"
+ ],
+ "plugin_chrome-devtools-mcp_chrome-devtools::list_console_messages": [
+  "untrusted_input"
+ ],
+ "plugin_chrome-devtools-mcp_chrome-devtools::navigate_page": [
+  "untrusted_input"
+ ],
+ "plugin_chrome-devtools-mcp_chrome-devtools::new_page": [
+  "none"
+ ],
+ "plugin_chrome-devtools-mcp_chrome-devtools::performance_start_trace": [
+  "none"
+ ],
+ "plugin_chrome-devtools-mcp_chrome-devtools::performance_stop_trace": [
+  "none"
+ ],
+ "plugin_chrome-devtools-mcp_chrome-devtools::resize_page": [
+  "none"
+ ],
+ "plugin_chrome-devtools-mcp_chrome-devtools::take_screenshot": [
+  "untrusted_input"
+ ],
+ "plugin_chrome-devtools-mcp_chrome-devtools::take_snapshot": [
+  "untrusted_input"
+ ],
+ "plugin_chrome-devtools-mcp_chrome-devtools::wait_for": [
+  "none"
+ ],
+ "plugin_claude-code-home-manager_github::add_comment_to_pending_review": [
+  "exfil_sink"
+ ],
+ "plugin_claude-code-home-manager_github::create_pull_request": [
+  "exfil_sink"
+ ],
+ "plugin_claude-code-home-manager_github::get_file_contents": [
+  "private_read"
+ ],
+ "plugin_claude-code-home-manager_github::list_pull_requests": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_claude-mem_mcp-search::smart_outline": [
+  "private_read"
+ ],
+ "plugin_claude-mem_mcp-search::smart_search": [
+  "private_read"
+ ],
+ "plugin_claude-mem_mcp-search::smart_unfold": [
+  "private_read"
+ ],
+ "plugin_context7_context7::query-docs": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "plugin_context7_context7::resolve-library-id": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "plugin_development-system_development-discipline::setup_apply": [
+  "none"
+ ],
+ "plugin_development-system_development-discipline::setup_preview": [
+  "none"
+ ],
+ "plugin_development-system_development-discipline::workspace-reader_list": [
+  "private_read"
+ ],
+ "plugin_development-system_development-discipline::workspace-reader_read": [
+  "private_read"
+ ],
+ "plugin_development-system_development-discipline::workspace-reader_repository": [
+  "private_read"
+ ],
+ "plugin_development-system_development-discipline::workspace-reader_search": [
+  "private_read"
+ ],
+ "plugin_development-system_development-discipline::workspace-reader_status": [
+  "private_read"
+ ],
+ "plugin_everything-claude-code_context7::query-docs": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "plugin_everything-claude-code_context7::resolve-library-id": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "plugin_everything-claude-code_exa::web_fetch_exa": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "plugin_everything-claude-code_exa::web_search_exa": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "plugin_everything-claude-code_github::add_issue_comment": [
+  "exfil_sink"
+ ],
+ "plugin_everything-claude-code_github::create_or_update_file": [
+  "exfil_sink"
+ ],
+ "plugin_everything-claude-code_github::create_pull_request": [
+  "exfil_sink"
+ ],
+ "plugin_everything-claude-code_github::create_pull_request_review": [
+  "exfil_sink"
+ ],
+ "plugin_everything-claude-code_github::get_file_contents": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_everything-claude-code_github::get_issue": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_everything-claude-code_github::get_pull_request": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_everything-claude-code_github::get_pull_request_comments": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_everything-claude-code_github::get_pull_request_files": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_everything-claude-code_github::get_pull_request_reviews": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_everything-claude-code_github::get_pull_request_status": [
+  "private_read"
+ ],
+ "plugin_everything-claude-code_github::list_commits": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_everything-claude-code_github::list_issues": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_everything-claude-code_github::list_pull_requests": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_everything-claude-code_github::merge_pull_request": [
+  "none"
+ ],
+ "plugin_everything-claude-code_github::push_files": [
+  "exfil_sink"
+ ],
+ "plugin_everything-claude-code_github::search_code": [
+  "exfil_sink",
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_everything-claude-code_github::search_issues": [
+  "exfil_sink",
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_everything-claude-code_github::search_repositories": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "plugin_everything-claude-code_github::update_pull_request_branch": [
+  "none"
+ ],
+ "plugin_figma_figma::download_assets": [
+  "private_read"
+ ],
+ "plugin_figma_figma::get_design_context": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_figma_figma::get_metadata": [
+  "private_read"
+ ],
+ "plugin_figma_figma::get_motion_context": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_figma_figma::get_screenshot": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_figma_figma::get_variable_defs": [
+  "private_read"
+ ],
+ "plugin_figma_figma::use_figma": [
+  "private_read"
+ ],
+ "plugin_mem0_mem0::search_memories": [
+  "private_read"
+ ],
+ "plugin_playwright_playwright::browser_click": [
+  "exfil_sink"
+ ],
+ "plugin_playwright_playwright::browser_close": [
+  "none"
+ ],
+ "plugin_playwright_playwright::browser_evaluate": [
+  "exfil_sink",
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_playwright_playwright::browser_fill_form": [
+  "exfil_sink"
+ ],
+ "plugin_playwright_playwright::browser_hover": [
+  "none"
+ ],
+ "plugin_playwright_playwright::browser_navigate": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "plugin_playwright_playwright::browser_press_key": [
+  "exfil_sink"
+ ],
+ "plugin_playwright_playwright::browser_resize": [
+  "none"
+ ],
+ "plugin_playwright_playwright::browser_snapshot": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_playwright_playwright::browser_tabs": [
+  "private_read"
+ ],
+ "plugin_playwright_playwright::browser_take_screenshot": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_playwright_playwright::browser_wait_for": [
+  "none"
+ ],
+ "plugin_qmd_qmd::deep_search": [
+  "private_read"
+ ],
+ "plugin_qmd_qmd::get": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_qmd_qmd::multi_get": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_qmd_qmd::search": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_qmd_qmd::status": [
+  "none"
+ ],
+ "plugin_qmd_qmd::vector_search": [
+  "private_read",
+  "untrusted_input"
+ ],
+ "plugin_token-optimizer_token-optimizer::smart_edit": [
+  "private_read"
+ ],
+ "plugin_token-optimizer_token-optimizer::smart_glob": [
+  "private_read"
+ ],
+ "plugin_token-optimizer_token-optimizer::smart_grep": [
+  "private_read"
+ ],
+ "plugin_token-optimizer_token-optimizer::smart_read": [
+  "private_read"
+ ],
+ "plugin_token-optimizer_token-optimizer::wiki_read": [
+  "private_read"
+ ],
+ "postgres::describe-table": [
+  "private_read"
+ ],
+ "postgres::list-tables": [
+  "private_read"
+ ],
+ "radar-server::accounts_list": [
+  "private_read"
+ ],
+ "radar-server::get_ai_data": [
+  "none"
+ ],
+ "radar-server::get_as_details": [
+  "none"
+ ],
+ "radar-server::get_dns_queries_data": [
+  "none"
+ ],
+ "radar-server::get_domain_rank_details": [
+  "none"
+ ],
+ "radar-server::get_domains_ranking": [
+  "none"
+ ],
+ "radar-server::get_email_routing_data": [
+  "none"
+ ],
+ "radar-server::get_email_security_data": [
+  "none"
+ ],
+ "radar-server::get_http_data": [
+  "none"
+ ],
+ "radar-server::get_internet_quality_data": [
+  "none"
+ ],
+ "radar-server::get_internet_services_ranking": [
+  "none"
+ ],
+ "radar-server::get_internet_speed_data": [
+  "none"
+ ],
+ "radar-server::get_ip_details": [
+  "none"
+ ],
+ "radar-server::get_l3_attack_data": [
+  "none"
+ ],
+ "radar-server::get_l7_attack_data": [
+  "none"
+ ],
+ "radar-server::get_traffic_anomalies": [
+  "none"
+ ],
+ "radar-server::list_autonomous_systems": [
+  "none"
+ ],
+ "radar-server::scan_url": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "radar-server::set_active_account": [
+  "none"
+ ],
+ "rapture::budget": [
+  "none"
+ ],
+ "rapture::commit": [
+  "none"
+ ],
+ "rapture::patch": [
+  "none"
+ ],
+ "rapture::read": [
+  "private_read"
+ ],
+ "rapture::rollback": [
+  "none"
+ ],
+ "rapture::search": [
+  "private_read"
+ ],
+ "reddit::fetch_reddit_hot_threads": [
+  "untrusted_input"
+ ],
+ "reddit::fetch_reddit_post_content": [
+  "untrusted_input"
+ ],
+ "repomix::pack_remote_repository": [
+  "untrusted_input"
+ ],
+ "roblox::insert_model": [
+  "exfil_sink"
+ ],
+ "search-tools::analyze_config_impact": [
+  "private_read"
+ ],
+ "search-tools::analyze_error_patterns": [
+  "private_read"
+ ],
+ "search-tools::analyze_execution_paths": [
+  "private_read"
+ ],
+ "search-tools::analyze_recent_changes": [
+  "private_read"
+ ],
+ "search-tools::change_propagation_analysis": [
+  "private_read"
+ ],
+ "search-tools::coderank_analysis": [
+  "private_read"
+ ],
+ "search-tools::contextual_keyword_search": [
+  "private_read"
+ ],
+ "search-tools::discover_side_effects": [
+  "private_read"
+ ],
+ "search-tools::find_api_usage_examples": [
+  "private_read"
+ ],
+ "search-tools::find_code_hotspots": [
+  "private_read"
+ ],
+ "search-tools::get_repo_symbols": [
+  "private_read"
+ ],
+ "search-tools::get_symbol_usages": [
+  "private_read"
+ ],
+ "search-tools::map_integration_points": [
+  "private_read"
+ ],
+ "search-tools::smart_code_search": [
+  "private_read"
+ ],
+ "search-tools::trace_data_flow": [
+  "private_read"
+ ],
+ "search-tools::trace_dependency_impact": [
+  "private_read"
+ ],
+ "search-tools::trace_feature_implementation": [
+  "private_read"
+ ],
+ "semantic-scholar::export_bibtex": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "semantic-scholar::get_paper_citations": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "semantic-scholar::get_paper_details": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "semantic-scholar::get_paper_references": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "semantic-scholar::get_recommendations": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "semantic-scholar::get_related_papers": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "sequentialthinking::sequentialthinking": [
+  "none"
+ ],
+ "serena::find_referencing_symbols": [
+  "private_read"
+ ],
+ "serena::find_symbol": [
+  "private_read"
+ ],
+ "serena::get_project_info": [
+  "private_read"
+ ],
+ "serena::get_symbols_overview": [
+  "private_read"
+ ],
+ "serena::insert_after_symbol": [
+  "none"
+ ],
+ "serena::insert_before_symbol": [
+  "none"
+ ],
+ "serena::list_dir": [
+  "private_read"
+ ],
+ "serena::list_memories": [
+  "private_read"
+ ],
+ "serena::load_memory": [
+  "private_read"
+ ],
+ "serena::read_memory": [
+  "private_read"
+ ],
+ "serena::rename_symbol": [
+  "none"
+ ],
+ "serena::replace_symbol_body": [
+  "none"
+ ],
+ "serena::safe_delete_symbol": [
+  "none"
+ ],
+ "serena::save_memory": [
+  "none"
+ ],
+ "serena::search_for_pattern": [
+  "private_read"
+ ],
+ "serena::write_memory": [
+  "none"
+ ],
+ "stitch::apply_design_system": [
+  "exfil_sink"
+ ],
+ "stitch::create_design_system": [
+  "exfil_sink"
+ ],
+ "stitch::create_project": [
+  "exfil_sink"
+ ],
+ "stitch::edit_screens": [
+  "exfil_sink"
+ ],
+ "stitch::generate_screen_from_text": [
+  "exfil_sink"
+ ],
+ "stitch::generate_variants": [
+  "exfil_sink"
+ ],
+ "stitch::get_project": [
+  "private_read"
+ ],
+ "stitch::get_screen": [
+  "private_read"
+ ],
+ "stitch::list_design_systems": [
+  "private_read"
+ ],
+ "stitch::list_projects": [
+  "private_read"
+ ],
+ "stitch::list_screens": [
+  "private_read"
+ ],
+ "stitch::update_design_system": [
+  "exfil_sink"
+ ],
+ "strategy-review::get_page_image": [
+  "private_read"
+ ],
+ "strategy-review::search_chunks": [
+  "private_read"
+ ],
+ "strategy-review::search_documents": [
+  "private_read"
+ ],
+ "studio-play::say": [
+  "exfil_sink"
+ ],
+ "supabase::apply_migration": [
+  "none"
+ ],
+ "supabase::execute_sql": [
+  "private_read"
+ ],
+ "supabase::generate_typescript_types": [
+  "private_read"
+ ],
+ "supabase::get_advisors": [
+  "private_read"
+ ],
+ "supabase::list_tables": [
+  "private_read"
+ ],
+ "task-master-ai::add_dependency": [
+  "none"
+ ],
+ "task-master-ai::add_subtask": [
+  "none"
+ ],
+ "task-master-ai::add_tag": [
+  "none"
+ ],
+ "task-master-ai::add_task": [
+  "none"
+ ],
+ "task-master-ai::analyze_project_complexity": [
+  "private_read"
+ ],
+ "task-master-ai::clear_subtasks": [
+  "none"
+ ],
+ "task-master-ai::complexity_report": [
+  "private_read"
+ ],
+ "task-master-ai::copy_tag": [
+  "none"
+ ],
+ "task-master-ai::delete_tag": [
+  "none"
+ ],
+ "task-master-ai::expand_all": [
+  "private_read"
+ ],
+ "task-master-ai::expand_task": [
+  "private_read"
+ ],
+ "task-master-ai::fix_dependencies": [
+  "none"
+ ],
+ "task-master-ai::generate": [
+  "private_read"
+ ],
+ "task-master-ai::get_task": [
+  "private_read"
+ ],
+ "task-master-ai::get_tasks": [
+  "private_read"
+ ],
+ "task-master-ai::initialize_project": [
+  "none"
+ ],
+ "task-master-ai::list_tags": [
+  "none"
+ ],
+ "task-master-ai::move_task": [
+  "none"
+ ],
+ "task-master-ai::next_task": [
+  "private_read"
+ ],
+ "task-master-ai::parse_prd": [
+  "none"
+ ],
+ "task-master-ai::remove_dependency": [
+  "none"
+ ],
+ "task-master-ai::remove_subtask": [
+  "none"
+ ],
+ "task-master-ai::remove_task": [
+  "none"
+ ],
+ "task-master-ai::rename_tag": [
+  "none"
+ ],
+ "task-master-ai::research": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "task-master-ai::scope_down_task": [
+  "private_read"
+ ],
+ "task-master-ai::scope_up_task": [
+  "private_read"
+ ],
+ "task-master-ai::set_task_status": [
+  "none"
+ ],
+ "task-master-ai::update": [
+  "private_read"
+ ],
+ "task-master-ai::update_subtask": [
+  "none"
+ ],
+ "task-master-ai::update_task": [
+  "none"
+ ],
+ "task-master-ai::use_tag": [
+  "none"
+ ],
+ "task-master-ai::validate_dependencies": [
+  "none"
+ ],
+ "todo-server::list_todos": [
+  "private_read"
+ ],
+ "trirouter::route_prompt": [
+  "exfil_sink"
+ ],
+ "x402::build_seller_requirements": [
+  "none"
+ ],
+ "x402::discover_services": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "x402::get_payment_requirements": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "x402::get_pro_upgrade_requirements": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "x402::get_tool_credits_requirements": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "x402vault::pay_and_fetch": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "youtube-data::getTrendingVideos": [
+  "untrusted_input"
+ ],
+ "youtube-data::getVideoEngagementRatio": [
+  "untrusted_input"
+ ],
+ "youtube-data::searchVideos": [
+  "exfil_sink",
+  "untrusted_input"
+ ],
+ "zai-mcp-server::analyze_data_visualization": [
+  "exfil_sink"
+ ],
+ "zai-mcp-server::analyze_image": [
+  "exfil_sink"
+ ],
+ "zai-mcp-server::diagnose_error_screenshot": [
+  "exfil_sink"
+ ],
+ "zread::get_repo_structure": [
+  "private_read"
+ ],
+ "zread::read_file": [
+  "private_read"
+ ],
+ "zread::search_doc": [
+  "private_read"
+ ]
+}

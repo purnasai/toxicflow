@@ -7,3 +7,5 @@ data/sandbox/
 data/corpus/raw/
 data/corpus/search_hits.jsonl
 data/corpus/repos.jsonl
+data/corpus/results.jsonl
+data/corpus/results_*.jsonl

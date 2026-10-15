@@ -139,8 +139,16 @@ def server_kind(alias: str, spec: dict | None) -> str:
 
 # ---------------------------------------------------------------- resolution
 
+# Counterfactual: a shell that can only touch local files (no network). Used to measure what
+# remains after the obvious fix "stop giving subagents an unrestricted shell".
+BASH_LOCAL_CAPS = ("private_read", "store_read", "store_write")
+
+
 class Resolver:
-    def __init__(self, llm_labels: dict[str, list[str]] | None = None):
+    def __init__(self, llm_labels: dict[str, list[str]] | None = None, bash: str = "full"):
+        if bash not in ("full", "local"):
+            raise ValueError("bash must be 'full' or 'local'")
+        self.bash = bash
         self.curated = load_tools()
         self.by_kind: dict[str, list[str]] = {}
         for t in self.curated.values():
@@ -161,9 +169,10 @@ class Resolver:
             return [self.mcp_tool(alias, kind, n) for n in self.by_kind[kind]]
         return [self.mcp_tool(alias, kind, "*")]
 
-    @staticmethod
-    def builtin(name: str) -> ToolInfo:
+    def builtin(self, name: str) -> ToolInfo:
         base = name.split("(")[0].strip()
+        if base == "Bash" and self.bash == "local":
+            return ToolInfo(f"builtin.{name}", "workspace", name, BASH_LOCAL_CAPS, "builtin")
         if base in BUILTIN_CAPS and "(" not in name:
             server = "workspace" if base in FILE_TOOLS else "claude"
             return ToolInfo(f"builtin.{base}", server, base, BUILTIN_CAPS[base], "builtin")

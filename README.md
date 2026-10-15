@@ -42,9 +42,60 @@ toxicflow replay acme acme_injection --after-repair   # after the repair those s
 | `github_solo` | one agent with the full GitHub server (the publicly reported GitHub MCP injection shape) | Per-agent check and graph agree. |
 | `unlabelled` | the only outbound path goes through a tool nobody labelled | UNKNOWN, never "safe". The gate fails closed. |
 
+## Real-world check: 2,921 public agent setups
+
+We wanted to know how often this actually happens, so we ran ToxicFlow on real projects.
+
+**Data.**
+- 3,000 public GitHub repositories that define Claude Code subagents (`.claude/agents/*.md` with a `tools:` line), found through GitHub code search.
+- 19,862 agent files and 508 `.mcp.json` files.
+- 2,921 projects parsed (42 skipped).
+- Each project was loaded into **its own FalkorDB graph**. Reach was computed with `algo.bfs`, which gives the same result as the Cypher flow query on every scenario (tested).
+- Raw files are not redistributed; only aggregate numbers are published (`data/corpus/summary.json`).
+
+**How tools were labelled.**
+- Built-in tools use a fixed table: `WebFetch` is untrusted input + outbound, `Read` is a private read, and `Bash` is everything.
+- MCP tools we harvested use the curated labels.
+- The other 1,146 MCP tool names were labelled by an LLM, after a **blind check against our 137 hand-labelled tools**:
+
+  | Capability | Precision | Recall |
+  |---|---|---|
+  | untrusted input | 0.96 | 0.92 |
+  | outbound | 0.88 | 0.98 |
+  | private read | 0.60 | 0.86 |
+
+- Store labels were unreliable, so they were not used. 101 low-confidence tools stay `unknown`.
+- Every number below was computed with and without the LLM labels. They differ by under one point.
+
+**Results.** The main thread is treated as a pure orchestrator, which asks whether splitting work into subagents keeps risky capabilities apart. As configured, the main thread holds every tool, so 100% of projects are trivially exposed.
+
+| | Result |
+|---|---|
+| Projects with a toxic flow | **88%** |
+| Projects where a subagent has an unrestricted shell (`Bash`) | **87%** |
+| After the obvious fix (shell without network), projects still exposed | **35%** |
+| …because a subagent has no `tools:` line and inherits everything | 489 projects |
+| …because one agent gets web access plus file reads (e.g. a "researcher") | 538 projects |
+| Exposed only through cross-agent paths (each agent looks safe alone) | **0.4% of still-exposed (4 projects)** |
+
+**What this means.** In today's public Claude Code setups the risk is mostly **inside single agents**: too many tools, unrestricted shells, and silent tool inheritance. The cross-agent leaks that only a graph can see do occur, but rarely. ToxicFlow reports both kinds, and the same graph lets you test a fix across thousands of setups before recommending it.
+
+**Limits.**
+- It is a sample. The search was split by file size, so smaller agent files are over-represented.
+- Claude Code asks the user before many tool calls, and we do not model that prompt.
+- A reported path means a leak *can* happen, not that it did.
+
+Reproduce:
+```bash
+uv run python -m toxicflow.corpus.crawl --max-repos 3000
+uv run python -m toxicflow.corpus.label_llm validate && uv run python -m toxicflow.corpus.label_llm corpus
+uv run python -m toxicflow.corpus.scan && uv run python -m toxicflow.corpus.scan --bash local
+uv run python -m toxicflow.corpus.aggregate
+```
+
 ## Data: real MCP servers, not synthetic tools
 
-`toxicflow harvest` starts 14 public MCP servers over stdio and saves the tools each reports via `tools/list`: 109 tools in total. The servers are filesystem, fetch, git, memory, time, github, slack, postgres, sqlite, brave-search, puppeteer, google-maps, sentry and everything. Credentials are dummies; listing tools never calls an upstream API. Results are in `data/tools/*.json` with their source URLs.
+`toxicflow harvest` starts 17 public MCP servers over stdio and saves the tools each reports via `tools/list`: 137 tools in total. The servers are filesystem, fetch, git, memory, time, github, slack, postgres, sqlite, brave-search, puppeteer, google-maps, sentry, everything, playwright, context7 and sequential-thinking. Credentials are dummies; listing tools never calls an upstream API. Results are in `data/tools/*.json` with their source URLs.
 
 `data/labels.yaml` gives each tool its capabilities, with the reason written down. A tool that matches no rule is `unknown`. Flows that depend on an unknown tool are reported as **UNKNOWN**, never as safe.
 
@@ -177,14 +228,14 @@ Requires Docker, Python 3.12 and [uv](https://docs.astral.sh/uv/). Node.js is ne
 ## Status
 
 Done:
-- harvest of real MCP tool schemas, capability labels, graph loading;
-- one-hop vs multi-hop scan, UNKNOWN handling;
+- harvest of 17 real MCP servers (137 labelled tools), graph loading, one-hop vs multi-hop scan, UNKNOWN handling;
 - repair search on graph copies; apply, verify, memory nodes, patched config;
 - MCP server over the query catalogue; LLM investigator with human approval;
 - runtime gate proxy and scripted replay;
 - web UI;
-- five scenarios;
-- 21 tests, including a separate reference oracle.
+- five demo scenarios;
+- real-world check on 2,921 public agent setups, including a counterfactual fix;
+- 32 tests, including a separate reference oracle.
 
 Next:
 - demo video;

@@ -56,3 +56,29 @@ def aggregate() -> dict:
 
 if __name__ == "__main__":
     print(json.dumps(aggregate(), indent=2))
+
+
+def counterfactual(labels: str = "curated") -> dict:
+    """Compare each project before and after the obvious fix (shell without network),
+    orchestrator view, so the main thread's own default tools do not dominate."""
+    key = f"orchestrator/{labels}"
+    load = lambda p: {r["repo"]: r for r in map(json.loads, p.read_text().splitlines()) if "skipped" not in r}  # noqa: E731
+    before = load(RESULTS)
+    after = load(RESULTS.with_name("results_bash_local.jsonl"))
+    common = sorted(set(before) & set(after))
+    b = [before[r][key] for r in common]
+    a = [after[r][key] for r in common]
+    n = len(common)
+    still = [x for x in a if x["toxic"]]
+    was = sum(x["toxic"] for x in b)
+    return {
+        "projects": n,
+        "toxic_before_pct": pct(was, n),
+        "toxic_after_pct": pct(len(still), n),
+        "fixed_by_restricting_shell_pct_of_toxic": pct(sum(x["toxic"] and not y["toxic"] for x, y in zip(b, a)), was),
+        "still_toxic_hidden_pct": pct(sum(x["hidden"] for x in still), len(still)),
+        "still_toxic_with_single_agent_toxic_pct": pct(sum(x["toxic_alone_subagents"] > 0 for x in still), len(still)),
+        "still_toxic_meeting_only_in_main_pct": pct(sum(x["meeting_main_only"] for x in still), len(still)),
+        "hidden_after_count": sum(x["hidden"] for x in a),
+        "unknown_only_after_pct": pct(sum(x["unknown_only"] for x in a), n),
+    }

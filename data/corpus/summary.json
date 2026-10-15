@@ -1,0 +1,140 @@
+{
+  "projects_scanned": 2921,
+  "projects_skipped": 42,
+  "subagents": {
+    "total": 19009,
+    "median": 4,
+    "max": 80
+  },
+  "projects_with_inheriting_subagent_pct": 16.7,
+  "projects_with_bash_subagent_pct": 87.3,
+  "projects_with_mcp_pct": 20.4,
+  "top_mcp_servers": [
+    [
+      "playwright",
+      145
+    ],
+    [
+      "context7",
+      129
+    ],
+    [
+      "github",
+      102
+    ],
+    [
+      "filesystem",
+      31
+    ],
+    [
+      "supabase",
+      28
+    ],
+    [
+      "sequential-thinking",
+      28
+    ],
+    [
+      "ide",
+      26
+    ],
+    [
+      "chrome-devtools",
+      20
+    ],
+    [
+      "postgres",
+      20
+    ],
+    [
+      "shadcn",
+      18
+    ],
+    [
+      "firecrawl-mcp",
+      16
+    ],
+    [
+      "serena",
+      14
+    ],
+    [
+      "figma",
+      13
+    ],
+    [
+      "codegraph",
+      13
+    ],
+    [
+      "memory",
+      12
+    ]
+  ],
+  "modes": {
+    "configured/curated": {
+      "toxic_pct": 100.0,
+      "hidden_pct": 0.0,
+      "hidden_share_of_toxic_pct": 0.0,
+      "unknown_only_pct": 0.0,
+      "some_subagent_toxic_alone_pct": 88.2,
+      "no_subagent_toxic_alone_but_toxic_pct": 100.0,
+      "projects_with_no_subagent_toxic_alone": 344,
+      "median_flows_when_toxic": 64
+    },
+    "configured/llm": {
+      "toxic_pct": 100.0,
+      "hidden_pct": 0.0,
+      "hidden_share_of_toxic_pct": 0.0,
+      "unknown_only_pct": 0.0,
+      "some_subagent_toxic_alone_pct": 88.3,
+      "no_subagent_toxic_alone_but_toxic_pct": 100.0,
+      "projects_with_no_subagent_toxic_alone": 341,
+      "median_flows_when_toxic": 64
+    },
+    "orchestrator/curated": {
+      "toxic_pct": 88.3,
+      "hidden_pct": 0.1,
+      "hidden_share_of_toxic_pct": 0.1,
+      "unknown_only_pct": 3.5,
+      "some_subagent_toxic_alone_pct": 88.2,
+      "no_subagent_toxic_alone_but_toxic_pct": 0.9,
+      "projects_with_no_subagent_toxic_alone": 344,
+      "median_flows_when_toxic": 45.0
+    },
+    "orchestrator/llm": {
+      "toxic_pct": 88.4,
+      "hidden_pct": 0.1,
+      "hidden_share_of_toxic_pct": 0.1,
+      "unknown_only_pct": 3.2,
+      "some_subagent_toxic_alone_pct": 88.3,
+      "no_subagent_toxic_alone_but_toxic_pct": 0.9,
+      "projects_with_no_subagent_toxic_alone": 341,
+      "median_flows_when_toxic": 45
+    }
+  },
+  "counterfactual_shell_without_network": {
+    "curated": {
+      "projects": 2921,
+      "toxic_before_pct": 88.3,
+      "toxic_after_pct": 35.2,
+      "fixed_by_restricting_shell_pct_of_toxic": 60.2,
+      "still_toxic_hidden_pct": 0.4,
+      "still_toxic_with_single_agent_toxic_pct": 99.6,
+      "still_toxic_meeting_only_in_main_pct": 0.0,
+      "hidden_after_count": 4,
+      "unknown_only_after_pct": 7.2
+    },
+    "llm": {
+      "projects": 2921,
+      "toxic_before_pct": 88.4,
+      "toxic_after_pct": 35.7,
+      "fixed_by_restricting_shell_pct_of_toxic": 59.7,
+      "still_toxic_hidden_pct": 0.3,
+      "still_toxic_with_single_agent_toxic_pct": 99.7,
+      "still_toxic_meeting_only_in_main_pct": 0.0,
+      "hidden_after_count": 3,
+      "unknown_only_after_pct": 6.2
+    }
+  }
+}
