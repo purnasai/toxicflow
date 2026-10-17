@@ -28,7 +28,7 @@ multi-hop traversal over who can influence whom.
 |---|---|
 | Test suite incl. independent pure-Python oracle | **32/32 pass** (`uv run pytest -q`, 5 s) |
 | `scan acme` | per-agent view: all 4 agents "look safe"; graph: **8 toxic flows**, 0 unknown |
-| `repair acme` | 9 single fixes rejected (each breaks a task); cheapest repairs: **cost 3** |
+| `repair acme` | 13 single fixes rejected (each breaks a task or leaves flows); cheapest repairs: **cost 3** |
 | `replay acme acme_injection --no-gate` | secret leaves **3 ways** (2× Slack, 1× fetch) |
 | `replay … ` (gate on) | **3 calls blocked**, each with its path; nothing leaves |
 | `replay … --after-repair` | repair chosen by the graph search and applied first; **4 steps impossible**, nothing leaves |
