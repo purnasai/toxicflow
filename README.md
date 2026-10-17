@@ -75,13 +75,14 @@ We wanted to know how often this actually happens, so we ran ToxicFlow on real p
 | Projects where a subagent has an unrestricted shell (`Bash`) | **87%** |
 | After the obvious fix (shell without network), projects still exposed | **35%** |
 | …because a subagent has no `tools:` line and inherits everything | 489 projects |
-| …because one agent gets web access plus file reads (e.g. a "researcher") | 538 projects |
+| …with no inheriting subagent (in 534 of these, one explicitly configured subagent holds all three capabilities by itself) | 538 projects |
 | Exposed only through cross-agent paths (each agent looks safe alone) | **0.4% of still-exposed (4 projects)** |
 
 **What this means.** In today's public Claude Code setups the risk is mostly **inside single agents**: too many tools, unrestricted shells, and silent tool inheritance. The cross-agent leaks that only a graph can see do occur, but rarely. ToxicFlow reports both kinds, and the same graph lets you test a fix across thousands of setups before recommending it.
 
 **Limits.**
 - It is a sample. The search was split by file size, so smaller agent files are over-represented.
+- Forks were excluded at crawl time, but non-fork copies were not: 230 projects are byte-identical copies of another project's agent files (126 groups, e.g. one SDK template copied six times). Keeping one per group (2,691 projects) gives 88.0% toxic, 35.3% still exposed after the shell fix, and the same 4 cross-agent-only projects. Headline numbers above use all 2,921.
 - Claude Code asks the user before many tool calls, and we do not model that prompt.
 - A reported path means a leak *can* happen, not that it did.
 
@@ -163,6 +164,8 @@ A reported path is evidence that the leak *can* happen, not proof that it will.
 2. A hitting-set search tries combinations from cheapest upward. Each try runs on a **`GRAPH.COPY`** of the graph: apply the change, rebuild the influence edges, then re-run `TOXIC_FLOWS` and `TASK_STATUS`.
 3. A repair is accepted only if the graph shows no flows left and no task broken.
 4. `--apply` writes the change to the real graph, checks it again, and records `Finding` and `Remediation` nodes. It then exports the patched agent config (`data/scenarios/<name>.patched.yaml`).
+
+Where the repair is enforced: in the graph (re-checked after apply), by the runtime gate (the gate's allowed tool lists and influence edges come from the repaired graph, so `replay --after-repair` shows the attack steps as impossible), and in the exported config. The patched config has not been deployed to a live Claude Code or MCP client installation; that last step is the user's.
 
 ## The agent (MCP)
 
