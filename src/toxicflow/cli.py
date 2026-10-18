@@ -35,7 +35,14 @@ TRIAD = ("untrusted_input", "private_read", "exfil_sink")
 
 def cmd_scan(args) -> int:
     db = connect()
-    g = load(db, load_scenario_file(args.scenario))
+    name = f"toxicflow_{args.scenario}"
+    if args.reload or name not in db.list_graphs():
+        g = load(db, load_scenario_file(args.scenario))
+        console.print(f"[dim]graph {name}: loaded fresh from data/scenarios/{args.scenario}.yaml[/dim]")
+    else:
+        g = db.select_graph(name)
+        applied = g.ro_query("MATCH (r:Remediation) RETURN count(r)").result_set[0][0]
+        console.print(f"[dim]graph {name}: existing state, {applied} applied remediation(s); use --reload to start from the YAML[/dim]")
 
     t = Table(title="Per-agent view (what a one-hop scanner sees)")
     for col in ("agent", *TRIAD, "verdict"):
@@ -141,6 +148,7 @@ def main(argv: list[str] | None = None) -> int:
     h.add_argument("servers", nargs="*")
     s = sub.add_parser("scan")
     s.add_argument("scenario")
+    s.add_argument("--reload", action="store_true", help="discard applied repairs and reload from the scenario file")
     r = sub.add_parser("repair")
     r.add_argument("scenario")
     r.add_argument("--apply", action="store_true")
@@ -169,10 +177,15 @@ def main(argv: list[str] | None = None) -> int:
     rp.add_argument("attack")
     rp.add_argument("--after-repair", action="store_true")
     rp.add_argument("--no-gate", action="store_true", help="baseline: let every call through")
+    sub.add_parser("eval", help="ablation vs ground truth; writes results/eval.json and results/EVAL.md")
     ui = sub.add_parser("ui")
     ui.add_argument("--port", type=int, default=8790)
     args = p.parse_args(argv)
 
+    if args.cmd == "eval":
+        from .evaluate import main as eval_main
+
+        return eval_main()
     if args.cmd == "ui":
         from .ui import main as ui_main
 

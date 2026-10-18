@@ -41,6 +41,42 @@ toxicflow replay acme acme_injection --after-repair   # after the repair those s
 | `assistant` | one browser agent that fills forms from local notes | 1 flow. **No configuration change keeps its job working**, so a human decides and the runtime gate protects it meanwhile. |
 | `github_solo` | one agent with the full GitHub server (the publicly reported GitHub MCP injection shape) | Per-agent check and graph agree. |
 | `unlabelled` | the only outbound path goes through a tool nobody labelled | UNKNOWN, never "safe". The gate fails closed. |
+| `support` | a dispatcher **with no risky tools** bridges a ticket reader, a records agent and a Slack notifier; the ticket reader also writes shared notes the notifier reads | Per-agent check: all safe. Graph: 2 flows, one meeting in the tool-less dispatcher and one through the shared store. A single permission change (revoke the ticket reader's input) removes both but breaks triage; the chosen repair (cost 3, two changes) keeps all 4 tasks. |
+| `support_safe` | the same agents, tools and tasks, wired with structured returns and a separate notes instance | **Negative control:** 0 flows, and the same calls that leak in `support` are allowed. |
+
+Every scenario's flows, cheapest repair cost and runtime decisions are written down by hand in `data/expected.yaml`, and the tests check against that file rather than against the detector's own output.
+
+## Evaluation: does the graph actually matter?
+
+`uv run toxicflow eval` runs the ablation below over all 7 scenarios and writes `results/eval.json` and `results/EVAL.md`. Two runs give the same result fingerprint (`189a8479fd10685e`); only the timings change.
+
+**A. Per-agent check vs. B. graph investigation** (ground truth: 14 hand-derived flows)
+
+| | True positives | False positives | False negatives |
+|---|---|---|---|
+| A: each agent checked on its own | 2 | 0 | **12** |
+| B: multi-hop `TOXIC_FLOWS` on FalkorDB | **14** | 0 | 0 |
+
+12 of the 14 flows need capabilities joined across agents; the per-agent check finds only the two single-agent cases (`assistant`, `github_solo`). The negative controls (`support_safe`, and `unlabelled` in strict mode) produce no flows.
+
+**C. Repair**: on all 7 scenarios the graph search's cheapest cost and its full set of cheapest repairs equal those of an exhaustive solver over the *whole* intervention space (every subset of up to 5 actions with cost up to 8, `toxicflow/reference.py`). In `acme`, all 13 single fixes fail: 9 break a task and 4 leave flows. After the chosen repair, flows go 8→0 and 0 of 5 tasks break.
+
+**D. Runtime** (41 hand-labelled calls in 13 sequences, including after-repair and legitimate workflows):
+
+| Policy | Legitimate calls allowed | Unsafe calls blocked | Unsafe allowed | Legitimate blocked |
+|---|---|---|---|---|
+| FalkorDB gate | 36/36 | **5/5** | 0 | 0 |
+| No gate | 36/36 | 0/5 | 5 | 0 |
+| Per-agent gate (blocks if the caller itself read untrusted + private) | 36/36 | 0/5 | **5** | 0 |
+
+All 5 unsafe calls are cross-agent, so a per-agent runtime policy misses every one. Scripted replays through the real gate path: `acme_injection` leaks 3 ways with no gate, 0 with the gate (3 blocked), and 0 after repair (4 steps impossible).
+
+**What this does and does not prove.** The security decision depends on joining relationships across agents; that is the claim. It is *not* that only a graph database can compute it. `toxicflow/reference.py` computes the same flows and repairs over plain Python dicts, agrees on every scenario, and is faster on these small graphs (microseconds vs. 2–70 ms per flow query). FalkorDB earns its place as the shared, mutable system of record:
+- The MCP tools the agent calls, the repair simulations (`GRAPH.COPY`), the human-approved changes, the memory of past findings, the runtime gate's session log, and the UI all read and write the same graph.
+- A repair applied by `approve` immediately changes what the gate allows.
+- Several agents' gate proxies share one session through it.
+
+Remove FalkorDB and the reference can still answer "is this config toxic?", but there is no live state for the agent to act on or for the gate to enforce.
 
 ## Real-world check: 2,921 public agent setups
 
@@ -79,6 +115,11 @@ We wanted to know how often this actually happens, so we ran ToxicFlow on real p
 | Exposed only through cross-agent paths (each agent looks safe alone) | **0.4% of still-exposed (4 projects)** |
 
 **What this means.** In today's public Claude Code setups the risk is mostly **inside single agents**: too many tools, unrestricted shells, and silent tool inheritance. The cross-agent leaks that only a graph can see do occur, but rarely. ToxicFlow reports both kinds, and the same graph lets you test a fix across thousands of setups before recommending it.
+
+**Why "4 of 1,027" is so low** (`data/corpus/graph_only_audit.json`):
+- After the shell fix, 1,023 of the 1,027 still-exposed projects have at least one subagent that holds all three capabilities by itself, so they are counted as single-agent exposure. "Cross-agent-only" excludes any project that *also* has an over-powered agent.
+- Of the 1,898 projects with no over-powered agent, only 4 spread the three capabilities across different subagents at all. A cross-agent-only leak needs that split, and the graph flags all 4.
+- The low share therefore reflects how public setups are built (one agent gets everything, or a capability is missing entirely) and how the metric is defined. It is not the detector missing paths; the detector's path-finding is checked against hand-derived ground truth and an independent implementation above.
 
 **Limits.**
 - It is a sample. The search was split by file size, so smaller agent files are over-represented.
@@ -156,6 +197,8 @@ A reported path is evidence that the leak *can* happen, not proof that it will.
 
 ## How the repair works
 
+The cost model: quarantine 1, isolate 2, revoke 3, cut 4. The ranking is a judgement: keep the delegation but restrict what comes back, before splitting state, before removing tools, before removing a working relationship. The numbers are not measured business costs. Tasks are the constraint; cost only ranks safe options.
+
 1. Each remaining flow yields the interventions that would break its path:
    - quarantine a delegation (structured results only);
    - isolate a shared store;
@@ -164,6 +207,10 @@ A reported path is evidence that the leak *can* happen, not proof that it will.
 2. A hitting-set search tries combinations from cheapest upward. Each try runs on a **`GRAPH.COPY`** of the graph: apply the change, rebuild the influence edges, then re-run `TOXIC_FLOWS` and `TASK_STATUS`.
 3. A repair is accepted only if the graph shows no flows left and no task broken.
 4. `--apply` writes the change to the real graph, checks it again, and records `Finding` and `Remediation` nodes. It then exports the patched agent config (`data/scenarios/<name>.patched.yaml`).
+
+**Exactness.** The search branches only on interventions that break a remaining flow's witness path, and stops at 4 actions; that is a heuristic restriction. `toxicflow/reference.py` therefore also enumerates the full intervention space. On every scenario both give the same minimum cost and the same set of minimum-cost repairs (`tests/test_expected.py`, `toxicflow eval`). This is checked on these scenarios, not proven in general.
+
+**Task model limit.** A task "works" if its agent can still reach every needed tool, directly or by delegation. Data dependencies are not modelled: after isolating a store, the notifier can still post a digest, but it no longer sees the other agent's notes.
 
 Where the repair is enforced: in the graph (re-checked after apply), by the runtime gate (the gate's allowed tool lists and influence edges come from the repaired graph, so `replay --after-repair` shows the attack steps as impossible), and in the exported config. The patched config has not been deployed to a live Claude Code or MCP client installation; that last step is the user's.
 
@@ -185,6 +232,13 @@ Each tool runs fixed, parameterised Cypher. Agent, store and capability names ar
 
 Only a human applies the proposal, with `toxicflow approve`. The model's final answer is then checked: every `backticked` name must exist in the graph. If any doesn't, the graph's own result is shown instead.
 
+A recorded run on `support` (`results/investigate_support.txt`, `approve_support.txt`, `rescan_support.txt`):
+1. The agent made 15 MCP tool calls: `list_agents`, `recall` and `agent_profile` for each of the 4 agents, `one_hop_scan`, `find_toxic_flows`, `check_tasks`, `search_repairs`, `simulate_repair` and `propose_repair`. It filed a cost-3 proposal. The tool choice is the model's, so the sequence varies between runs.
+2. `approve` applied it and re-verified it: 0 flows left, 0 broken tasks.
+3. `scan support` on the same graph showed 0 flows and 1 applied remediation, and `recall` returned the stored remediation.
+
+The security decisions (flows, repair validity, gate verdicts) come from the deterministic queries, never from the model. The name check does not verify the model's prose: in an earlier development run (not kept), it wrongly said the notifier would keep seeing the ticket reader's notes after the ticket reader was isolated.
+
 ## Runtime gate
 
 `toxicflow gate <scenario> <agent> --session S` is an MCP proxy for one agent:
@@ -199,6 +253,10 @@ Before an outbound call, the gate asks the graph a single question. In this sess
 - Private reads under untrusted influence are allowed but flagged `ALLOW_TAINTED`.
 - An unlabelled sink with that history is `BLOCK_UNKNOWN`: it fails closed.
 
+What the gate does and does not track: taint is per agent and per session (which agents read untrusted or private data, and the current influence edges between them), not per value or argument. It is conservative: once untrusted and private reads can meet upstream of a caller, every outbound call from that caller is blocked, whatever the arguments. Private data sent out with no untrusted input in the session is allowed by design (`standup` posting team notes), because the threat model is injection-driven exfiltration, not data-loss prevention.
+
+What is executed and what is simulated: the gate's decisions are computed live from the graph on every call, and filesystem and git MCP servers run for real. GitHub, Slack and fetch return canned fixtures. The tool-call sequences come from scripts (`data/attacks/`, `data/expected.yaml`), not from an LLM being attacked.
+
 `toxicflow replay` drives a scripted session (`data/attacks/`) through the same gate. A step marked `uses: n` carries data from step n. After a repair, the graph is asked whether that data can still reach the agent; if it can't, the step is shown as UNREACHABLE.
 
 ## Correctness
@@ -211,8 +269,11 @@ Before an outbound call, the gate asks the graph a single question. In this sess
 - simulation copies leaving the base graph untouched;
 - gate behaviour: benign posts allowed, injection chains blocked with paths, shared-store chains blocked, read order not mattering, denied calls not counting, the same calls passing after repair, and unlabelled sinks failing closed (`tests/test_gate.py`).
 
+- every scenario against hand-derived flows, cheapest repair cost and 13 runtime sequences, plus an exhaustive repair check and a single-permission fix that removes the risk but breaks work (`tests/test_expected.py`).
+
 ```bash
-uv run pytest -q
+uv run pytest -q          # 61 tests
+uv run toxicflow eval     # ablation, repair exactness, runtime baselines -> results/EVAL.md
 ```
 
 ## Setup
@@ -221,7 +282,8 @@ uv run pytest -q
 docker compose up -d          # FalkorDB on :6390, browser on http://localhost:3390
 uv sync
 uv run toxicflow harvest      # optional: tool data is committed in data/tools/
-uv run toxicflow scan acme
+uv run toxicflow scan acme --reload   # --reload discards repairs applied earlier to this scenario's graph
+uv run toxicflow eval
 ```
 
 The investigator needs `OPENAI_API_KEY` (optionally `OPENAI_MODEL`), either in `.env` or in a file named by `TOXICFLOW_ENV_FILE`.
@@ -236,9 +298,10 @@ Done:
 - MCP server over the query catalogue; LLM investigator with human approval;
 - runtime gate proxy and scripted replay;
 - web UI;
-- five demo scenarios;
-- real-world check on 2,921 public agent setups, including a counterfactual fix;
-- 32 tests, including a separate reference oracle.
+- seven scenarios, including a negative control, with hand-derived ground truth;
+- `toxicflow eval`: per-agent vs. graph detection, exact repair check, runtime baselines;
+- real-world check on 2,921 public agent setups, including a counterfactual fix and an explanation of the graph-only share;
+- 61 tests, including a separate reference oracle and an exhaustive repair solver.
 
 Next:
 - demo video;

@@ -1,0 +1,13 @@
+prop-20261018T091413733749 (pending)
+  actions: ['isolate|notifier|memory/notes', 'quarantine|dispatcher|web']
+  rationale: The multi-hop scan found two toxic routes from web's untrusted 
+GitHub issue input to notifier's private reads and Slack sink, including a path 
+through records' private customer files. Isolating notifier from the shared 
+notes store and making web's delegated results structured-only removes all flows
+while keeping every task working (confirmed by simulation).
+{
+    'remediation': 'rem-2026-10-18T09:14:31+00:00',
+    'verified': True,
+    'flows_left': 0,
+    'broken_tasks': {}
+}

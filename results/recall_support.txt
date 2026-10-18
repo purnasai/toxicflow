@@ -1,0 +1,4 @@
+notifier its own instance of store memory/notes', 'make web return structured 
+results only to dispatcher (no free text)']})
+    ]
+}

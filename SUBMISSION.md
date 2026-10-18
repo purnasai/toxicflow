@@ -1,83 +1,75 @@
-# ToxicFlow — Graph Hacks submission (Track 01: Agents That Act on Connected Data)
+# ToxicFlow: Graph Hacks submission (Track 01: Agents That Act on Connected Data)
 
-Repo: https://github.com/purnasai/toxicflow · License MIT · Built 15–17 Oct 2026 for the hackathon.
+Repo: https://github.com/purnasai/toxicflow · MIT · built 15–18 Oct 2026 for the hackathon.
 
-## One-line pitch
-An agent that finds where untrusted content can steer a multi-agent MCP setup into leaking private data across
-agents, picks the least disruptive fix from graph evidence, applies it, and enforces it at runtime.
+## Pitch
+An agent that finds where untrusted content can steer a multi-agent MCP setup into leaking private data
+**across agents that each look safe on their own**. It picks the cheapest fix that keeps the team's real
+work running, a human approves it, and a runtime gate enforces it against live tool calls. FalkorDB holds
+the agents, tools, delegations, shared stores, tasks, repair simulations, findings and runtime sessions.
+Every decision is a Cypher query over that graph.
 
-## Problem
-A prompt-injection leak needs three capabilities at once: reading untrusted input, reading private data, and
-sending data out. Scanners check one agent at a time. When the three are spread across agents that delegate to
-each other or share a store, every agent passes the check and the system still leaks. Finding that needs a
-multi-hop traversal over who can influence whom.
+## Verified results (all reproducible: `uv run pytest -q` → 61 passed; `uv run toxicflow eval`, fingerprint `189a8479fd10685e` on two runs)
 
-## What the agent does (all on FalkorDB)
-1. **Scan**: one-hop per-agent view vs. the multi-hop `TOXIC_FLOWS` Cypher query (0..8 hops over `INSTRUCTS`,
-   `REPORTS_TO`, `WRITES_TO`/`FEEDS`).
-2. **Decide**: hitting-set repair search; every candidate is applied to a `GRAPH.COPY`, the flow query and the
-   task-coverage query are re-run, and only repairs with zero flows and zero broken tasks are kept.
-3. **Act**: `--apply` writes the repair to the graph, re-verifies it, records `Finding`/`Remediation` memory nodes,
-   and exports the patched agent config. An LLM investigator can drive the same tools over MCP and file a
-   `Proposal`; a human approves it.
-4. **Enforce**: a per-agent MCP gate proxy asks the graph, before every outbound call, whether untrusted and private
-   data have met upstream of the caller in this session; if so it blocks and returns the path.
-
-## Verified results (re-run 2026-10-18; code at 7f7fcbe, docs updated after)
-| Check | Result |
+| Question | Evidence |
 |---|---|
-| Test suite incl. independent pure-Python oracle | **32/32 pass** (`uv run pytest -q`, 5 s) |
-| `scan acme` | per-agent view: all 4 agents "look safe"; graph: **8 toxic flows**, 0 unknown |
-| `repair acme` | 13 single fixes rejected (each breaks a task or leaves flows); cheapest repairs: **cost 3** |
-| `replay acme acme_injection --no-gate` | secret leaves **3 ways** (2× Slack, 1× fetch) |
-| `replay … ` (gate on) | **3 calls blocked**, each with its path; nothing leaves |
-| `replay … --after-repair` | repair chosen by the graph search and applied first; **4 steps impossible**, nothing leaves |
+| Do per-agent checks miss real risks? | Against 14 hand-derived flows in 7 scenarios: per-agent check 2 found, **12 missed**; graph 14 found, 0 false positives, 0 missed. |
+| Is the detector right, not just loud? | Ground truth written by hand (`data/expected.yaml`). An independent pure-Python implementation agrees on every scenario. The negative control `support_safe` gives 0 flows. |
+| Is the repair really the cheapest? | On all 7 scenarios the graph search's minimum cost **and** full set of minimum repairs equal an exhaustive solver over the whole intervention space (≤5 actions, cost ≤8). |
+| Why not one simple permission change? | `acme`: all 13 single fixes fail (9 break a task, 4 leave flows). `support`: revoking the ticket reader's input removes both flows but breaks triage; the chosen repair (same cost, 2 changes) keeps all 4 tasks. |
+| Does the gate enforce anything? | 41 hand-labelled calls: the FalkorDB gate allows 36/36 legitimate calls and blocks 5/5 unsafe ones. No gate and a per-agent gate each let **all 5** unsafe calls through. Scripted `acme_injection`: 3 leaks → 0 with gate → 0 after repair (4 steps impossible). |
+| Is there an agent? | `toxicflow investigate` = LLM + MCP client over 10 fixed-Cypher MCP tools. Recorded run on `support`: 15 tool calls → proposal → `approve` (applied, re-verified: 0 flows, 0 broken tasks) → rescan 0 flows → `recall` returns the remediation. Files in `results/`. |
+| Real world? | 2,921 public Claude Code setups: 88.3% toxic, 87.3% unrestricted `Bash` subagent, 35.2% still exposed after a shell fix. Cross-agent-only: 4 projects. Of 1,898 projects with no over-powered agent, only 4 split the three capabilities across agents, and the graph flags all 4. |
 
-Real-world corpus (aggregate re-derived from per-project results on 2026-10-18):
-- 3,000 public GitHub repos with Claude Code subagents; forks excluded at crawl; 2,963 scanned rows, 2,921
-  parsed (42 skipped). 88.3% have a toxic flow; 87.3% have an unrestricted `Bash` subagent; after a
-  shell-without-network counterfactual 35.2% (1,027) remain exposed; **4 of 1,027 (0.39%) only through
-  cross-agent paths**. 489 still-exposed projects have an inheriting subagent; in 534 of the other 538 one
-  explicitly configured subagent holds all three capabilities.
-- Duplicate sensitivity: 230 projects are byte-identical copies of another; on the 2,691 distinct ones: 88.0%,
-  35.3%, still 4 cross-agent-only projects.
-- Honest reading: in today's public setups the risk is mostly inside single agents; the cross-agent case only a
-  graph sees is real but rare.
-
-## Reachable vs. exploited
-A reported flow means the configuration *permits* the leak path. Exploitation is demonstrated only in the scripted
-`acme_injection` replay, against real filesystem/git MCP servers and canned GitHub/Slack/fetch responses. No real
-third-party system was attacked; the corpus numbers are reachability only.
-
-## Limits
-Hand-written scenario topologies (tool data is real, harvested from 17 MCP servers); no argument-level
-permissions, OAuth scopes or message content; the patched config is exported but not deployed into a live client;
-corpus sample skewed toward small agent files; LLM labels used for 1,146 unlabelled tool names (validated blind:
-precision 0.96 / 0.88 / 0.60 for untrusted / outbound / private).
+## Honest scope
+- **Static analysis is conservative reachability.** A flow means the configuration *permits* the path, not that a leak happened.
+- **Runtime taint is per agent and per session, not per value.** Private data sent with no untrusted input is allowed by design: the threat model is injection-driven exfiltration.
+- **The graph is not mathematically indispensable.** A dict-based reference computes the same answers faster on these small graphs. FalkorDB is the shared, mutable state that the agent's MCP tools, the `GRAPH.COPY` simulations, approvals, memory, the gate's sessions and the UI all act on.
+- **What is real and what is scripted.**
+  - Scenarios are synthetic; the tool data is real (harvested from 17 MCP servers).
+  - Attack sequences are scripted, not an LLM under attack.
+  - GitHub, Slack and fetch responses come from fixtures; filesystem and git servers run for real.
+  - The patched config is exported, not deployed to a live client.
+- **The model is limited.** Repair cost weights are a stated judgement, not measured business costs. Tasks model tool reachability, not data dependencies. The LLM's prose is checked for names only; decisions come from the queries.
 
 ## Reproduce
 ```bash
 git clone https://github.com/purnasai/toxicflow && cd toxicflow
 docker compose up -d && uv sync
-uv run pytest -q
-uv run toxicflow scan acme
+uv run pytest -q                       # 61 tests
+uv run toxicflow eval                  # results/EVAL.md
+uv run toxicflow scan acme --reload
 uv run toxicflow repair acme
 uv run toxicflow replay acme acme_injection --no-gate
 uv run toxicflow replay acme acme_injection
 uv run toxicflow replay acme acme_injection --after-repair
-uv run toxicflow ui        # http://localhost:8790
+uv run toxicflow ui                    # http://localhost:8790
+# agent (needs OPENAI_API_KEY via .env or TOXICFLOW_ENV_FILE):
+uv run toxicflow investigate support --reload && uv run toxicflow approve support <proposal-id> && uv run toxicflow scan support
 ```
 
-## 3-minute demo video script
-| Time | Screen | Say |
+## Demo video script (3:00 maximum)
+| Time | Screen | Narration |
 |---|---|---|
-| 0:00–0:20 | README diagram / acme graph in UI | "Three agents, each safe alone. Together they leak. ToxicFlow finds that on FalkorDB." |
-| 0:20–0:55 | UI **Scan**: per-agent table, then click the `triage → coder → memory → standup` flow | "One-hop: all safe. Multi-hop query: 8 flows. This one has no delegation edge between coder and standup; it goes through shared memory." |
-| 0:55–1:35 | UI **Repair** | "The obvious cuts each break a team task. The graph search tests combinations on graph copies: cost 3, quarantine coder's output and isolate its memory. Applied and re-verified." |
-| 1:35–2:30 | UI **Runtime gate**: no gate → gate → after repair | "Scripted injection: three leaks. Gate on: all three blocked, with the path that justified each block. After repair: those steps cannot even happen." |
-| 2:30–3:00 | Corpus table in README | "On 2,921 real setups: 88% have a flow, mostly single over-powered agents; cross-agent-only leaks are rare (4). We report that honestly." |
+| 0:00–0:15 | UI, `acme`, headline strip | "Four agents. Reviewed one at a time, all four look safe. FalkorDB's multi-hop query finds 8 toxic flows." |
+| 0:15–0:50 | Scan: click "triage + coder meet in coder, out via standup"; hover `coder` | "Injected issue text goes triage → coder; coder writes shared memory; standup reads it and posts to Slack. No delegation edge between coder and standup. Coder is on the route of all 8 flows." |
+| 0:50–1:25 | Repair tab, then "Show graph after repair" | "13 single fixes: 9 break a team task, 4 leave flows. The search tests combinations on graph copies. Cost 3: quarantine coder's output, give it its own memory. An exhaustive solver confirms nothing cheaper exists." |
+| 1:25–2:00 | Runtime gate: No gate → Gate on (click #5) → After repair | "Scripted injection: three leaks. Gate on: all three blocked, each with the path that justified it. After the repair, those steps can't happen, and legitimate work still passes." |
+| 2:00–2:30 | Terminal: `toxicflow investigate support` output, `approve`, `scan support` | "The agent works only through MCP tools over the graph. It compares views, simulates repairs and files a proposal. A human approves; the graph re-verifies; the rescan shows zero flows." |
+| 2:30–3:00 | `results/EVAL.md` | "Across 7 scenarios with hand-written ground truth: per-agent checks miss 12 of 14 flows; the graph misses none. A per-agent runtime gate lets every unsafe call through; ours blocks all five. In 2,921 real setups, most risk sits in over-powered single agents, and we say so." |
+
+## Submission checklist
+- [x] Public repository: github.com/purnasai/toxicflow (**local commits not yet pushed**)
+- [x] README with architecture, graph model, Cypher (`src/toxicflow/queries.py`), setup, limitations, findings
+- [x] FalkorDB central: detection, repair simulation (`GRAPH.COPY`), approvals, memory, runtime gate sessions, UI
+- [x] Agent with real MCP tool selection (`toxicflow investigate`), with human approval
+- [x] Reproducible evaluation (`toxicflow eval`) and 61 tests
+- [x] AI-assistance disclosure (below)
+- [ ] Demo video (≤3 min, public link): to record
+- [ ] Submission form: to fill in
 
 ## AI assistance disclosure
-Built with an AI coding assistant (Claude Code), directed and reviewed by the author, who can explain the graph
-model, queries, repair search, gate and labels. Tool labels for 1,146 corpus tool names were produced by an LLM
-and validated against 137 hand labels.
+Built with an AI coding assistant (Claude Code). The author directed the work, reviewed every change, ran
+the tests and evaluation, and can explain the graph model, queries, repair search, gate and labels.
+Corpus tool labels for 1,146 tool names were produced by an LLM and validated blind against 137 hand
+labels (precision 0.96 / 0.88 / 0.60 for untrusted / outbound / private).

@@ -1,0 +1,18 @@
+{
+ "as_configured_shell": {
+  "projects": 2921,
+  "toxic": 2580,
+  "with_toxic_alone_agent": 2577,
+  "no_toxic_alone_agent": 344,
+  "graph_only": 3
+ },
+ "shell_without_network": {
+  "projects": 2921,
+  "toxic": 1027,
+  "with_toxic_alone_agent": 1023,
+  "no_toxic_alone_agent": 1898,
+  "graph_only": 4,
+  "no_alone_with_all_three_caps_across_subagents": 4,
+  "of_which_graph_toxic": 4
+ }
+}

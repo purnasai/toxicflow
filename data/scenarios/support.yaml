@@ -1,0 +1,47 @@
+# Customer-support team (synthetic). A dispatcher with no risky tools of its own coordinates
+# a ticket reader (public GitHub issues), a records agent (local customer files) and a notifier
+# that posts a digest of the shared notes to Slack.
+#
+# Looked at one agent at a time, nobody holds untrusted input + private data + an outbound tool:
+#   web      untrusted only (+ writes shared notes)
+#   records  private only
+#   notifier private (shared notes) + outbound, but never sees untrusted input directly
+#   dispatcher nothing risky at all (the bridge)
+# Two different routes carry injected ticket text to the Slack sink:
+#   1. web -> dispatcher (free-text report) -> notifier, meeting records' private data in the dispatcher
+#   2. web -> memory/notes (shared store) -> notifier, meeting the notifier's own private read
+name: support
+description: A tool-less dispatcher bridges a ticket reader, a records agent and a Slack notifier; injected ticket text can reach Slack two ways.
+
+agents:
+  - id: dispatcher
+    purpose: Route incoming support work to the right agent and assemble replies.
+    mounts:
+      - {server: everything, tools: [echo]}
+    delegates:
+      - {to: web, returns: text}
+      - {to: records, returns: text}
+      - {to: notifier, returns: structured}
+
+  - id: web
+    purpose: Read public GitHub issues filed by customers and save notes about them.
+    mounts:
+      - {server: github, tools: [get_issue]}
+      - {server: memory, instance: notes, tools: [create_entities]}
+
+  - id: records
+    purpose: Look up customer records in the local support files.
+    mounts:
+      - {server: filesystem, instance: records, tools: [read_text_file]}
+
+  - id: notifier
+    purpose: Post a digest of the shared support notes to Slack.
+    mounts:
+      - {server: memory, instance: notes, tools: [read_graph]}
+      - {server: slack, tools: [slack_post_message]}
+
+tasks:
+  - {id: triage-ticket, agent: dispatcher, needs: [github.get_issue, slack.slack_post_message]}
+  - {id: customer-lookup, agent: dispatcher, needs: [filesystem.read_text_file]}
+  - {id: save-notes, agent: web, needs: [memory.create_entities]}
+  - {id: post-digest, agent: notifier, needs: [memory.read_graph, slack.slack_post_message]}

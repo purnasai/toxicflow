@@ -1,0 +1,72 @@
+model gpt-6-luna; MCP tools: list_agents, agent_profile, tool_info, 
+one_hop_scan, find_toxic_flows, check_tasks, simulate_repair, search_repairs, 
+propose_repair, recall
+→ list_agents({})  {"result": [{"agent": "dispatcher", "purpose": "Route 
+incoming support work to the right agent and assemble replies."}, {"agent": 
+"notifier", "purpose": "Post …
+→ one_hop_scan({})  { "per_agent": { "dispatcher": [], "notifier": [ 
+"exfil_sink", "private_read" ], "records": [ "private_read" ], "web": [ 
+"untrusted_input" ] }, "agents_toxic_o…
+→ agent_profile({"agent": "dispatcher"})  { "agent": "dispatcher", "purpose": 
+"Route incoming support work to the right agent and assemble replies.", 
+"tools_by_capability": { "none": [ "everything.echo…
+→ agent_profile({"agent": "notifier"})  { "agent": "notifier", "purpose": "Post 
+a digest of the shared support notes to Slack.", "tools_by_capability": { 
+"exfil_sink": [ "slack.slack_post_message" ],…
+→ agent_profile({"agent": "records"})  { "agent": "records", "purpose": "Look up
+customer records in the local support files.", "tools_by_capability": { 
+"private_read": [ "filesystem.read_text_file"…
+→ agent_profile({"agent": "web"})  { "agent": "web", "purpose": "Read public 
+GitHub issues filed by customers and save notes about them.", 
+"tools_by_capability": { "store_write": [ "memory.creat…
+→ check_tasks({})  { "broken": {} }
+→ find_toxic_flows({"include_unknown": true})  { "toxic": 2, "unknown": 0, 
+"flows": [ { "status": "TOXIC", "entry": "web", "reader": "notifier", "exit": 
+"notifier", "hops": 2, "path": [ "web", "dispatcher",…
+→ recall({"agent": "web"})  {"result": []}
+→ recall({"agent": "dispatcher"})  {"result": []}
+→ recall({"agent": "notifier"})  {"result": []}
+→ recall({"agent": "records"})  {"result": []}
+→ search_repairs({"max_actions": 4, "top": 5})  { "repairs": [ { "cost": 3, 
+"actions": [ { "kind": "isolate", "a": "notifier", "b": "memory/notes" }, { 
+"kind": "quarantine", "a": "dispatcher", "b": "web" } ]…
+→ simulate_repair({"actions": [{"kind": "isolate", "a": "notifier", "b": 
+"memory/notes"}, {"kind": "quarantine", "a": "dispatcher", "b": …)  { "actions":
+[ "give notifier its own instance of store memory/notes", "make web return 
+structured results only to dispatcher (no free text)" ], "cost": 3, "re…
+→ propose_repair({"actions": [{"kind": "isolate", "a": "notifier", "b": 
+"memory/notes"}, {"kind": "quarantine", "a": "dispatcher", "b": …)  { 
+"proposal": "prop-20261018T091413733749", "status": "pending human approval", 
+"simulation": { "actions": [ "give notifier its own instance of store memory/no…
+───────────────────────────────── Investigator ─────────────────────────────────
+## Findings
+
+- I checked prior findings for `web`, `dispatcher`, `notifier`, and `records`; 
+none were recorded.
+- The per-agent scan found no agent toxic on its own: `web` has 
+`untrusted_input`, `records` has `private_read`, and `notifier` has 
+`private_read` plus `exfil_sink`. The multi-hop scan found **two toxic flows**; 
+neither was `UNKNOWN`.
+
+## Most dangerous flow
+
+Untrusted content from `github.get_issue` at `web` can travel via `dispatcher` 
+to `notifier`, which reads private data with `memory.read_graph` and can send it
+out using `slack.slack_post_message`. The scan also found a route involving 
+`records` and its private `filesystem.read_text_file` data, with the same 
+delegated path: `web` → `dispatcher` → `notifier`. The shared `memory/notes` 
+store is written by `web` and read by `notifier`.
+
+## Repair proposed
+
+I proposed isolating `notifier` from `memory/notes` and making `web` return 
+structured results only to `dispatcher`. Simulation confirmed **no remaining 
+flows and no broken tasks**. The proposal is pending human approval.
+
+Obvious single fixes are insufficient: making only `web` structured-only leaves 
+both flows, while making only `records` structured-only leaves one. Revoking key
+read or send capabilities, or removing required delegations, breaks tasks.
+
+15 tool calls via MCP.
+Proposal prop-20261018T091413733749 is waiting for approval: toxicflow approve 
+support prop-20261018T091413733749
