@@ -18,6 +18,8 @@ servers:
     source: https://github.com/modelcontextprotocol/servers/tree/main/src/memory
     command: npx
     args: ["-y", "@modelcontextprotocol/server-memory"]
+    # One process and one storage file per store instance, so graph-level `isolate` is real isolation.
+    env: {MEMORY_FILE_PATH: "{SANDBOX}/memory/{INSTANCE}.json"}
   - id: time
     source: https://github.com/modelcontextprotocol/servers/tree/main/src/time
     command: uvx

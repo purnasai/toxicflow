@@ -1,9 +1,13 @@
 # Ground truth for `toxicflow eval` and tests/test_expected.py, derived by hand from each topology
 # (not copied from detector output). Triples are (untrusted entry, private reader, outbound exit).
 #
-# Runtime cases: each step is [agent, tool, expected gate status]. A step expected BLOCK is an outbound
-# call that could carry private data shaped by untrusted content; every other step is legitimate work.
-# `repaired: true` runs the case after the cheapest repair the graph search finds has been applied.
+# Model: untrusted content steers along instruction-carrying edges (delegation down, free-text returns up,
+# shared stores); private data moves along those plus typed-data returns. Tasks must keep their tools AND
+# receive the data listed in needs_data. min_repair_cost: null = no configuration change removes every flow
+# while keeping every task (checked exhaustively over <=5 actions, cost <=8).
+#
+# Runtime cases: each step is [agent, tool, expected gate status]. A step expected BLOCK/BLOCK_UNKNOWN is a
+# call that could send out private data shaped by untrusted content; every other step is legitimate work.
 
 scenarios:
   acme:
@@ -18,7 +22,9 @@ scenarios:
       - [triage, standup, standup]
       - [researcher, standup, standup]
     per_agent: []
-    min_repair_cost: 3
+    # Untrusted issue text reaches coder by delegation and standup through the shared KB; coder's output
+    # must still reach triage (fix-bug) and standup (standup-notes), so no configuration change is safe.
+    min_repair_cost: null
     runtime:
       - name: issue read, then a benign post
         steps: [[triage, github.get_issue, ALLOW], [triage, slack.slack_post_message, ALLOW]]
@@ -39,26 +45,31 @@ scenarios:
           - [triage, github.get_issue, ALLOW]
           - [standup, memory.read_graph, ALLOW_TAINTED]
           - [standup, slack.slack_post_message, BLOCK]
-      - name: after repair, the same injection chain cannot carry the secret out
-        repaired: true
-        steps:
-          - [triage, github.get_issue, ALLOW]
-          - [coder, filesystem.read_text_file, ALLOW_TAINTED]
-          - [triage, slack.slack_post_message, ALLOW]
-          - [researcher, fetch.fetch, ALLOW]
-      - name: after repair, fix-bug and standup-notes still work
-        repaired: true
+      - name: under the gate, the fix-bug work itself still runs after an injected issue
         steps:
           - [triage, github.get_issue, ALLOW]
           - [coder, filesystem.read_text_file, ALLOW_TAINTED]
           - [coder, filesystem.edit_file, ALLOW]
-          - [standup, memory.read_graph, ALLOW]
-          - [standup, slack.slack_post_message, ALLOW]
+          - [coder, git.git_diff, ALLOW_TAINTED]
 
   analytics:
     flows: [[web, sql, analyst], [web, sql, web]]
     per_agent: []
-    min_repair_cost: 1
+    min_repair_cost: null   # SQL data must reach the analyst, who also instructs the web agent (whose search is a sink)
+
+  analytics_structured:
+    # Regression: the SQL agent's structured result (customer_id, revenue) still carries private data.
+    flows: [[web, sql, analyst], [web, sql, web]]
+    per_agent: []
+    min_repair_cost: null
+    runtime:
+      - name: structured SQL result meets injected search results in the analyst
+        steps:
+          - [web, brave-search.brave_web_search, ALLOW]
+          - [sql, postgres.query, ALLOW_TAINTED]
+          - [analyst, slack.slack_post_message, BLOCK]
+      - name: the report without web input posts normally
+        steps: [[sql, postgres.query, ALLOW], [analyst, slack.slack_post_message, ALLOW]]
 
   assistant:
     flows: [[assistant, assistant, assistant]]
@@ -74,12 +85,19 @@ scenarios:
     flows: []               # strict; flows through the unlabelled tool are UNKNOWN, never safe
     per_agent: []
     min_repair_cost: 0
+    runtime:
+      - name: unlabelled tool steered by an injected issue fails closed
+        steps: [[reader, github.get_issue, ALLOW], [helper, everything.trigger-long-running-operation, BLOCK_UNKNOWN]]
+      - name: unlabelled tool with no untrusted input upstream is allowed
+        steps: [[reader, filesystem.read_text_file, ALLOW], [helper, everything.trigger-long-running-operation, ALLOW]]
 
   support:
     # reach(web)=reach(records)=reach(dispatcher)={dispatcher,web,records,notifier}; reach(notifier)={notifier}
     flows: [[web, records, notifier], [web, notifier, notifier]]
     per_agent: []
-    min_repair_cost: 3      # quarantine dispatcher<-web plus isolating the notes store (either side)
+    # No change removes every flow and keeps all four tasks. The old cost-3 repair (typed returns from web +
+    # store isolation) leaves (web, records, notifier): typed fields still carry data the dispatcher forwards.
+    min_repair_cost: null
     single_fix_that_breaks_work: [revoke, web, untrusted_input]   # removes both flows, breaks triage-ticket
     runtime:
       - name: ticket read and notes saved
@@ -96,13 +114,6 @@ scenarios:
           - [web, github.get_issue, ALLOW]
           - [records, filesystem.read_text_file, ALLOW_TAINTED]
           - [notifier, slack.slack_post_message, BLOCK]
-      - name: after repair, both routes are closed and the digest still posts
-        repaired: true
-        steps:
-          - [web, github.get_issue, ALLOW]
-          - [records, filesystem.read_text_file, ALLOW]
-          - [notifier, memory.read_graph, ALLOW]
-          - [notifier, slack.slack_post_message, ALLOW]
 
   support_safe:
     flows: []

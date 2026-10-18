@@ -10,13 +10,16 @@ with no FalkorDB. It exists for three reasons:
    gate, the MCP tools and the UI all query and mutate; this module only reads a scenario file.
 
 Semantics mirrored from queries.py / repair.py:
-- influence edges: parent -> child for every delegation; child -> parent when it returns free text;
-  writer -> reader for agents sharing one store instance (server/instance);
-- toxic flow (a1, a2, a3): a1 holds untrusted_input, a2 holds private_read, some m is reachable from
-  both, a3 is reachable from m and holds exfil_sink (agents may coincide);
-- a task works if its agent, itself or through a chain of up to 4 delegations, can call every needed tool;
-- interventions: quarantine (free text -> structured, cost 1), isolate (agent gets its own store
-  instance, cost 2), revoke (drop every tool with a capability, cost 3), cut (remove a delegation, cost 4).
+- instruction edges: parent -> child for every delegation; child -> parent when the return channel is
+  free text; writer -> reader for agents sharing one store instance (server/instance);
+- data edges: all instruction edges, plus child -> parent when the return channel is typed data;
+- toxic flow (a1, a2, a3): a1 holds untrusted_input and steers some m over instruction edges, a2 holds
+  private_read and its data reaches m over data edges, and m's data reaches a3, which holds exfil_sink;
+- a task works if its agent, itself or through up to 4 delegations, can call every needed tool, AND every
+  declared `needs_data` pair (producer -> consumer) is still connected by data edges;
+- interventions: quarantine (free text -> typed fields: data still flows, instructions do not; cost 1),
+  isolate (agent gets its own store instance, cost 2), revoke (drop every tool with a capability, cost 3),
+  cut (remove a delegation, cost 4).
 """
 
 from __future__ import annotations
@@ -24,6 +27,7 @@ from __future__ import annotations
 import itertools
 from dataclasses import dataclass, field
 
+from .graph import channel
 from .labels import Tool, load_tools
 
 COST = {"quarantine": 1, "isolate": 2, "revoke": 3, "cut": 4}
@@ -34,11 +38,12 @@ RISK_CAPS = ("untrusted_input", "private_read", "exfil_sink")
 class State:
     tools: dict[str, Tool]
     holds: dict[str, dict[str, str]]  # agent -> {tool_id: instance}
-    delegations: dict[tuple[str, str], str]  # (parent, child) -> 'text' | 'structured'
+    delegations: dict[tuple[str, str], str]  # (parent, child) -> return channel 'text' | 'data' | 'none'
     tasks: list[tuple[str, str, list[str]]] = field(default_factory=list)
+    needs_data: dict[str, list[tuple[str, str]]] = field(default_factory=dict)  # task -> [(producer, consumer)]
 
     def copy(self) -> "State":
-        return State(self.tools, {a: dict(t) for a, t in self.holds.items()}, dict(self.delegations), self.tasks)
+        return State(self.tools, {a: dict(t) for a, t in self.holds.items()}, dict(self.delegations), self.tasks, self.needs_data)
 
 
 def from_scenario(sc: dict, tools: dict[str, Tool] | None = None) -> State:
@@ -52,20 +57,22 @@ def from_scenario(sc: dict, tools: dict[str, Tool] | None = None) -> State:
             for n in names:
                 holds[a["id"]][f"{m['server']}.{n}"] = m.get("instance", "default")
         for d in a.get("delegates", []):
-            delegations[(a["id"], d["to"])] = d.get("returns", "text")
+            delegations[(a["id"], d["to"])] = channel(d)
     tasks = [(t["id"], t["agent"], list(t["needs"])) for t in sc.get("tasks", [])]
-    return State(tools, holds, delegations, tasks)
+    needs = {t["id"]: [tuple(p) for p in t["needs_data"]] for t in sc.get("tasks", []) if t.get("needs_data")}
+    return State(tools, holds, delegations, tasks, needs)
 
 
 def caps_of(st: State, agent: str) -> set[str]:
     return {c for tid in st.holds[agent] for c in st.tools[tid].caps}
 
 
-def influence(st: State) -> dict[str, set[str]]:
+def influence(st: State, data: bool = False) -> dict[str, set[str]]:
+    """Instruction-carrying edges, or (data=True) data-carrying edges."""
     edges: dict[str, set[str]] = {a: set() for a in st.holds}
-    for (p, c), returns in st.delegations.items():
+    for (p, c), ch in st.delegations.items():
         edges[p].add(c)
-        if returns == "text":
+        if ch == "text" or (data and ch == "data"):
             edges[c].add(p)
     writers: dict[str, set[str]] = {}
     readers: dict[str, set[str]] = {}
@@ -94,8 +101,9 @@ def _reach(edges: dict[str, set[str]], start: str) -> set[str]:
 
 
 def flows(st: State, include_unknown: bool = False) -> set[tuple[str, str, str]]:
-    edges = influence(st)
-    reach = {a: _reach(edges, a) for a in st.holds}
+    instr, data = influence(st), influence(st, data=True)
+    steer = {a: _reach(instr, a) for a in st.holds}
+    carry = {a: _reach(data, a) for a in st.holds}
     caps = {a: caps_of(st, a) for a in st.holds}
 
     def has(a, cap):
@@ -108,8 +116,8 @@ def flows(st: State, include_unknown: bool = False) -> set[tuple[str, str, str]]
         for a2 in st.holds:
             if not has(a2, "private_read"):
                 continue
-            for m in reach[a1] & reach[a2]:
-                for a3 in reach[m]:
+            for m in steer[a1] & carry[a2]:
+                for a3 in carry[m]:
                     if has(a3, "exfil_sink"):
                         out.add((a1, a2, a3))
     return out
@@ -130,9 +138,11 @@ def broken_tasks(st: State) -> dict[str, list[str]]:
         for _ in range(4):
             frontier = {k for a in frontier for k in kids[a]} - reach
             reach |= frontier
-        missing = [n for n in needs if not any(n in st.holds[a] for a in reach)]
+        missing = sorted(n for n in needs if not any(n in st.holds[a] for a in reach))
+        data = influence(st, data=True)
+        missing += [f"data {p}>{c}" for p, c in st.needs_data.get(tid, []) if c not in _reach(data, p)]
         if missing:
-            out[tid] = sorted(missing)
+            out[tid] = missing
     return out
 
 
@@ -158,9 +168,9 @@ def universe(st: State) -> list[Act]:
             t = st.tools[tid]
             if {"store_read", "store_write"} & set(t.caps):
                 acts.add(Act("isolate", a, f"{t.server}/{inst}"))
-    for (p, c), returns in st.delegations.items():
+    for (p, c), ch in st.delegations.items():
         acts.add(Act("cut", p, c))
-        if returns == "text":
+        if ch == "text":
             acts.add(Act("quarantine", p, c))
     return sorted(acts, key=lambda x: (x.cost, x))
 
@@ -169,7 +179,7 @@ def apply(st: State, acts) -> State:
     st = st.copy()
     for act in acts:
         if act.kind == "quarantine" and (act.a, act.b) in st.delegations:
-            st.delegations[(act.a, act.b)] = "structured"
+            st.delegations[(act.a, act.b)] = "data"
         elif act.kind == "cut":
             st.delegations.pop((act.a, act.b), None)
         elif act.kind == "revoke":

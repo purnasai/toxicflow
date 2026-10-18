@@ -21,7 +21,7 @@ agents:
     delegates:
       - {to: web, returns: text}
       - {to: records, returns: text}
-      - {to: notifier, returns: structured}
+      - {to: notifier, returns: structured, fields: {posted: bool}}
 
   - id: web
     purpose: Read public GitHub issues filed by customers and save notes about them.
@@ -41,7 +41,7 @@ agents:
       - {server: slack, tools: [slack_post_message]}
 
 tasks:
-  - {id: triage-ticket, agent: dispatcher, needs: [github.get_issue, slack.slack_post_message]}
-  - {id: customer-lookup, agent: dispatcher, needs: [filesystem.read_text_file]}
+  - {id: triage-ticket, agent: dispatcher, needs: [github.get_issue, slack.slack_post_message], needs_data: [[web, dispatcher]]}
+  - {id: customer-lookup, agent: dispatcher, needs: [filesystem.read_text_file], needs_data: [[records, dispatcher]]}
   - {id: save-notes, agent: web, needs: [memory.create_entities]}
-  - {id: post-digest, agent: notifier, needs: [memory.read_graph, slack.slack_post_message]}
+  - {id: post-digest, agent: notifier, needs: [memory.read_graph, slack.slack_post_message], needs_data: [[web, notifier]]}

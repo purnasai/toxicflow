@@ -7,25 +7,33 @@ Graph model
 (:Server {id, source})-[:EXPOSES]->(:Tool {id, server, name, description})
 (:Tool)-[:HAS_CAP {why}]->(:Capability)
 (:Agent {id, purpose})-[:CAN_CALL {instance}]->(:Tool)
-(:Agent)-[:DELEGATES_TO {returns: 'text'|'structured'}]->(:Agent)
-(:Task {id})-[:ASSIGNED_TO]->(:Agent), (:Task)-[:NEEDS]->(:Tool)
+(:Agent)-[:DELEGATES_TO {returns: 'text'|'structured', channel: 'text'|'data'|'none'}]->(:Agent)
+(:Task {id, needs_data})-[:ASSIGNED_TO]->(:Agent), (:Task)-[:NEEDS]->(:Tool)
 
-Derived influence edges (rebuilt by REBUILD_* after every change):
-(:Agent)-[:INSTRUCTS]->(:Agent)   parent writes the child's instructions
-(:Agent)-[:REPORTS_TO]->(:Agent)  child returns free text to the parent (returns='text' only)
-(:Agent)-[:WRITES_TO]->(:Store)-[:FEEDS]->(:Agent)  shared state through one server instance
+`channel` is what the child's result can carry back, derived from the declared return fields:
+  text  free text (or a structured return with a string field, or with no declared fields): instructions + data
+  data  only ids / numbers / enums / booleans: data, but no natural-language instructions
+  none  only enums / booleans: neither
+ToxicFlow does not enforce these schemas; 'data' and 'none' are assumptions about the deployment.
 
-Content an agent has seen can reach every agent downstream of it on influence edges.
-A toxic flow needs untrusted content and private data to meet in one agent that can reach a sink.
+Derived edges (rebuilt by REBUILD_* after every change):
+(:Agent)-[:INSTRUCTS]->(:Agent)     parent writes the child's instructions (carries instructions + data)
+(:Agent)-[:REPORTS_TO]->(:Agent)    child returns free text (channel 'text'; instructions + data)
+(:Agent)-[:RETURNS_DATA]->(:Agent)  child returns typed fields (channel 'data'; data only)
+(:Agent)-[:WRITES_TO]->(:Store)-[:FEEDS]->(:Agent)  shared state through one server instance (instructions + data)
+
+Untrusted content steers an agent only along instruction-carrying edges; private data travels along
+every data-carrying edge. A toxic flow needs the two to meet in one agent that can get data to a sink.
 """
 
-INFLUENCE = "INSTRUCTS|REPORTS_TO|WRITES_TO|FEEDS"
+INFLUENCE = "INSTRUCTS|REPORTS_TO|WRITES_TO|FEEDS"          # can carry instructions (and data)
+DATAFLOW = "INSTRUCTS|REPORTS_TO|RETURNS_DATA|WRITES_TO|FEEDS"  # can carry data
 MAX_HOPS = 8
 
 # ---------------------------------------------------------------- derived edges
 
 CLEAR_DERIVED = """
-MATCH ()-[e:INSTRUCTS|REPORTS_TO|WRITES_TO|FEEDS|INFLUENCES]->() DELETE e
+MATCH ()-[e:INSTRUCTS|REPORTS_TO|RETURNS_DATA|WRITES_TO|FEEDS|INFLUENCES|CARRIES]->() DELETE e
 """
 
 DROP_STORES = "MATCH (s:Store) DELETE s"
@@ -33,8 +41,13 @@ DROP_STORES = "MATCH (s:Store) DELETE s"
 REBUILD_DELEGATION = """
 MATCH (p:Agent)-[d:DELEGATES_TO]->(c:Agent)
 MERGE (p)-[:INSTRUCTS]->(c)
-WITH p, c, d WHERE d.returns = 'text'
+WITH p, c, d WHERE d.channel = 'text'
 MERGE (c)-[:REPORTS_TO]->(p)
+"""
+
+REBUILD_DATA_RETURNS = """
+MATCH (p:Agent)-[d:DELEGATES_TO {channel: 'data'}]->(c:Agent)
+MERGE (c)-[:RETURNS_DATA]->(p)
 """
 
 REBUILD_STORE_WRITES = """
@@ -55,13 +68,18 @@ MATCH (x)-[:INSTRUCTS|REPORTS_TO|WRITES_TO|FEEDS]->(y)
 MERGE (x)-[:INFLUENCES]->(y)
 """
 
+REBUILD_CARRIES = """
+MATCH (x)-[:INSTRUCTS|REPORTS_TO|RETURNS_DATA|WRITES_TO|FEEDS]->(y)
+MERGE (x)-[:CARRIES]->(y)
+"""
+
 # ---------------------------------------------------------------- analysis
 
 # Every agent's reach over influence edges via FalkorDB's BFS (stores are traversed, only
 # agents are returned). Agents with no outgoing edges yield no row; callers add self-reach.
 REACH = """
 MATCH (x:Agent)
-CALL algo.bfs(x, $depth, 'INFLUENCES') YIELD nodes
+CALL algo.bfs(x, $depth, $rel) YIELD nodes
 RETURN x.id, [n IN nodes WHERE n:Agent | n.id]
 """
 
@@ -85,22 +103,41 @@ WHERE c1.name IN $untrusted
 WITH DISTINCT a1
 MATCH (a1)-[:{INFLUENCE}*0..{MAX_HOPS}]->(m:Agent)
 WITH DISTINCT a1, m
-MATCH (a2:Agent)-[:{INFLUENCE}*0..{MAX_HOPS}]->(m)
+MATCH (a2:Agent)-[:{DATAFLOW}*0..{MAX_HOPS}]->(m)
 WITH DISTINCT a1, m, a2
 WHERE size([(a2)-[:CAN_CALL]->(:Tool)-[:HAS_CAP]->(c:Capability) WHERE c.name IN $private | 1]) > 0
-MATCH (m)-[:{INFLUENCE}*0..{MAX_HOPS}]->(a3:Agent)
+MATCH (m)-[:{DATAFLOW}*0..{MAX_HOPS}]->(a3:Agent)
 WITH DISTINCT a1, m, a2, a3
 WHERE size([(a3)-[:CAN_CALL]->(:Tool)-[:HAS_CAP]->(c:Capability) WHERE c.name IN $sink | 1]) > 0
 RETURN a1.id AS entry, a2.id AS reader, a3.id AS exit, collect(m.id) AS meets
 ORDER BY entry, reader, exit
 """
 
-# Shortest influence path between two agents (the witness shown to people and used for repair).
+# Shortest path between two agents (the witness shown to people and used for repair):
+# WITNESS over instruction-carrying edges (untrusted route), WITNESS_DATA over data-carrying edges.
 WITNESS = f"""
 MATCH p = (a:Agent {{id: $src}})-[:{INFLUENCE}*0..{MAX_HOPS}]->(b:Agent {{id: $dst}})
 RETURN [n IN nodes(p) | n.id], [e IN relationships(p) | type(e)]
 ORDER BY length(p)
 LIMIT 1
+"""
+
+WITNESS_DATA = f"""
+MATCH p = (a:Agent {{id: $src}})-[:{DATAFLOW}*0..{MAX_HOPS}]->(b:Agent {{id: $dst}})
+RETURN [n IN nodes(p) | n.id], [e IN relationships(p) | type(e)]
+ORDER BY length(p)
+LIMIT 1
+"""
+
+# Output-level task requirements: data produced by one agent must still reach another.
+TASK_DATA = f"""
+MATCH (k:Task) WHERE k.needs_data IS NOT NULL
+UNWIND k.needs_data AS pair
+WITH k, pair, split(pair, '>') AS ends
+OPTIONAL MATCH p = (:Agent {{id: ends[0]}})-[:{DATAFLOW}*0..{MAX_HOPS}]->(:Agent {{id: ends[1]}})
+WITH k, pair, count(p) > 0 AS ok
+WHERE NOT ok
+RETURN k.id, collect('data ' + pair)
 """
 
 # Tools an agent holds for a set of capabilities.
@@ -138,9 +175,11 @@ DELETE c
 RETURN count(c) AS removed
 """
 
+# Restrict the child's result to typed fields (ids, numbers, enums, booleans): data still flows
+# back, natural-language instructions do not. Needs schema enforcement outside ToxicFlow.
 QUARANTINE = """
 MATCH (p:Agent {id: $parent})-[d:DELEGATES_TO]->(c:Agent {id: $child})
-SET d.returns = 'structured'
+SET d.returns = 'structured', d.channel = 'data'
 RETURN count(d) AS changed
 """
 

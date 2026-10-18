@@ -63,13 +63,14 @@ def one_hop_findings(g: Graph) -> list[str]:
 
 
 def _rows(g: Graph, params: dict) -> list[Flow]:
-    witness_cache: dict[tuple[str, str], tuple[list[str], list[str]]] = {}
+    witness_cache: dict[tuple[str, str, bool], tuple[list[str], list[str]]] = {}
 
-    def witness(src: str, dst: str) -> tuple[list[str], list[str]]:
-        if (src, dst) not in witness_cache:
-            nodes, rels = g.ro_query(Q.WITNESS, {"src": src, "dst": dst}).result_set[0]
-            witness_cache[(src, dst)] = (nodes, rels)
-        return witness_cache[(src, dst)]
+    def witness(src: str, dst: str, data: bool = False) -> tuple[list[str], list[str]]:
+        # untrusted route: instruction-carrying edges; private and outbound routes: data-carrying edges
+        if (src, dst, data) not in witness_cache:
+            nodes, rels = g.ro_query(Q.WITNESS_DATA if data else Q.WITNESS, {"src": src, "dst": dst}).result_set[0]
+            witness_cache[(src, dst, data)] = (nodes, rels)
+        return witness_cache[(src, dst, data)]
 
     def tools(agent: str, caps: list[str]) -> list[str]:
         return sorted(g.ro_query(Q.TOOLS_WITH_CAPS, {"agent": agent, "caps": caps}).result_set[0][0])
@@ -77,10 +78,10 @@ def _rows(g: Graph, params: dict) -> list[Flow]:
     out = []
     for entry, reader, exit_, meets in g.ro_query(Q.TOXIC_FLOWS, params).result_set:
         def total(m: str) -> int:
-            return sum(len(witness(a, b)[1]) for a, b in ((entry, m), (reader, m), (m, exit_)))
+            return len(witness(entry, m)[1]) + len(witness(reader, m, True)[1]) + len(witness(m, exit_, True)[1])
 
         m = min(sorted(set(meets)), key=total)
-        (pin, rin), (pdata, rdata), (pout, rout) = witness(entry, m), witness(reader, m), witness(m, exit_)
+        (pin, rin), (pdata, rdata), (pout, rout) = witness(entry, m), witness(reader, m, True), witness(m, exit_, True)
         out.append(
             Flow(
                 entry, reader, exit_, m,
@@ -113,7 +114,11 @@ def unknown_tool_ids(g: Graph) -> list[str]:
 
 
 def broken_tasks(g: Graph) -> dict[str, list[str]]:
-    return {task: missing for task, missing in g.ro_query(Q.TASK_STATUS).result_set if missing}
+    """Tasks that lose a needed tool, or whose needed data no longer reaches the agent that uses it."""
+    out = {task: missing for task, missing in g.ro_query(Q.TASK_STATUS).result_set if missing}
+    for task, missing in g.ro_query(Q.TASK_DATA).result_set:
+        out[task] = out.get(task, []) + missing
+    return out
 
 
 # ---------------------------------------------------------------- BFS-based analysis (scales to large setups)
@@ -132,10 +137,11 @@ class Summary:
         return self.toxic and not self.toxic_alone
 
 
-def reach_sets(g: Graph, depth: int = Q.MAX_HOPS) -> dict[str, set[str]]:
+def reach_sets(g: Graph, depth: int = Q.MAX_HOPS, rel: str = "INFLUENCES") -> dict[str, set[str]]:
+    """Agents reachable over instruction-carrying (INFLUENCES) or data-carrying (CARRIES) edges."""
     caps = one_hop(g)
     out = {a: {a} for a in caps}
-    for agent, reached in g.ro_query(Q.REACH, {"depth": depth}).result_set:
+    for agent, reached in g.ro_query(Q.REACH, {"depth": depth, "rel": rel}).result_set:
         out[agent] |= set(reached)
     return out
 
@@ -144,7 +150,8 @@ def summarize(g: Graph, include_unknown: bool = False, max_triples: int = 200_00
     """Same semantics as TOXIC_FLOWS (untrusted and private meet in m, m reaches a sink),
     computed from one BFS per agent instead of path enumeration."""
     caps = one_hop(g)
-    reach = reach_sets(g)
+    reach = reach_sets(g)                     # instructions (untrusted steering)
+    data = reach_sets(g, rel="CARRIES")       # data (private data, outbound)
 
     def has(agent: str, cap: str) -> bool:
         return cap in caps[agent] or (include_unknown and "unknown" in caps[agent])
@@ -155,8 +162,8 @@ def summarize(g: Graph, include_unknown: bool = False, max_triples: int = 200_00
     meets, triples = [], set()
     for m in caps:
         us = [a for a in U if m in reach[a]]
-        ps = [a for a in P if m in reach[a]]
-        ss = reach[m] & S
+        ps = [a for a in P if m in data[a]]
+        ss = data[m] & S
         if us and ps and ss:
             meets.append(m)
             if len(triples) < max_triples:

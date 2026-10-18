@@ -98,6 +98,7 @@ th { color: var(--muted); font-weight: 600; }
       <span><span class="pill u">untrusted</span><span class="pill p">private</span><span class="pill o">out</span> capabilities</span>
       <span><i style="background:#8a93a3"></i>instructs</span>
       <span><i style="background:#8a93a3;opacity:.6"></i>reports (free text)</span>
+      <span><i style="background:var(--private);opacity:.8"></i>typed data return</span>
       <span><i style="background:#c9832b"></i>shared store</span>
       <span>selected flow: <i style="background:var(--untrusted)"></i><i style="background:var(--private)"></i><i style="background:var(--out)"></i></span>
     </div>
@@ -108,7 +109,10 @@ th { color: var(--muted); font-weight: 600; }
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
 const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-let cy, state = { scenarios: [], tab: "scan", scan: null, repair: null };
+let cy, state = { scenarios: [], tab: "scan", scan: null, repair: null, seq: 0 };
+// Only the most recent tab/scenario request may render; a slower earlier one is dropped.
+class Stale extends Error {}
+const fresh = (my) => { if (my !== state.seq) throw new Stale(); };
 
 async function api(path) {
   const r = await fetch(path);
@@ -170,6 +174,7 @@ function drawGraph(graph, removed = [], ghosts = []) {
       { selector: "node[kind='store']", style: { shape: "barrel", "border-color": "#c9832b" } },
       { selector: "edge", style: { "curve-style": "bezier", "target-arrow-shape": "triangle", width: 2, "line-color": "#8a93a3", "target-arrow-color": "#8a93a3", "arrow-scale": 1 } },
       { selector: "edge[type='REPORTS_TO']", style: { "line-style": "dashed", opacity: 0.7 } },
+      { selector: "edge[type='RETURNS_DATA']", style: { "line-style": "dashed", "line-dash-pattern": [2, 4], "line-color": css("--private"), "target-arrow-color": css("--private"), opacity: 0.8 } },
       { selector: "edge[type='WRITES_TO'], edge[type='FEEDS']", style: { "line-color": "#c9832b", "target-arrow-color": "#c9832b", "line-style": "dotted", width: 2.5 } },
       { selector: "edge.removed", style: { "line-color": css("--untrusted"), "target-arrow-color": css("--untrusted"), "line-style": "dashed", opacity: 0.35, label: "removed", "font-size": 10, color: css("--untrusted") } },
       { selector: "node.removed", style: { opacity: 0.35, "border-style": "dashed", "border-color": css("--untrusted") } },
@@ -257,10 +262,12 @@ const routeHtml = (r) => `
 
 // ------------------------------------------------------------------ tabs
 
-async function showScan() {
+async function showScan(my) {
   const sc = $("#scenario").value;
   $("#side").innerHTML = `<p class="muted">Loading ${esc(sc)}…</p>`;
-  const d = state.scan = await api(`/api/${sc}/scan`);
+  const d = await api(`/api/${sc}/scan`);
+  fresh(my);
+  state.scan = d;
   drawGraph(d.graph);
   stripFromScan(d);
   tile("#t3", "neutral", "Next", "Click a flow", "its untrusted, private and outbound routes light up on the graph");
@@ -296,12 +303,13 @@ async function showScan() {
   });
 }
 
-async function showRepair() {
+async function showRepair(my) {
   const sc = $("#scenario").value;
   $("#side").innerHTML = `<p class="muted">Searching repairs on graph copies…</p>`;
   // Sequential: both endpoints reload the same scenario graph, and concurrent reloads race on index creation.
   const scan = state.scan && state.scan.sc === sc ? state.scan : await api(`/api/${sc}/scan`);
   const d = await api(`/api/${sc}/repair`);
+  fresh(my);
   scan.sc = sc; state.scan = scan;
   drawGraph(scan.graph);
   stripFromScan(scan);
@@ -315,7 +323,8 @@ async function showRepair() {
     tile("#t3", "good", "Cheapest repair (graph search)", `cost ${r.cost} → ${after ? after.flows_left.length : "?"} flows`,
       `${after ? Object.keys(after.broken_tasks).length : "?"} tasks broken · ${d.rejected_single_actions.length} single fixes rejected`);
   } else {
-    tile("#t3", "bad", "Cheapest repair (graph search)", "none keeps every task", "a human decides; the runtime gate protects meanwhile");
+    tile("#t3", "bad", "Configuration repair (graph search)", "none is safe",
+      `checked on graph copies: no change removes every flow and keeps every task's tools and data · ${d.rejected_single_actions.length} single fixes rejected · the runtime gate protects`);
   }
   $("#graphnote").textContent = "hover a node for details";
   const rejected = d.rejected_single_actions.map((r) => `<tr><td>${esc(r.action)}</td><td class="bad">${esc(r.reason)}</td></tr>`).join("");
@@ -325,7 +334,7 @@ async function showRepair() {
     <p class="muted">Each tried on a copy of the graph (GRAPH.COPY), then the same flow and task queries re-run.</p>
     <table><tr><th>intervention</th><th>result</th></tr>${rejected || '<tr><td colspan="2" class="muted">none</td></tr>'}</table>
     <h2 style="margin-top:18px">Cheapest repairs that remove every flow and keep every task</h2>
-    ${sols || '<div class="banner bad">No configuration change keeps every task working. Needs a human decision; the runtime gate is the remaining protection.</div>'}
+    ${sols || '<div class="banner bad">No configuration change removes every flow while keeping every task working (its tools and the data it needs). Needs a human redesign; the runtime gate is the remaining protection.</div>'}
     ${d.after ? `<p><button id="toggle">Show graph after repair 1</button></p><div id="afterinfo"></div>` : ""}`;
   if (d.after) {
     let showing = false;
@@ -348,9 +357,9 @@ async function showRepair() {
   }
 }
 
-async function showGate() {
+async function showGate(my) {
   const sc = state.scenarios.find((s) => s.name === $("#scenario").value);
-  if (!state.scan || state.scan.sc !== sc.name) { state.scan = await api(`/api/${sc.name}/scan`); state.scan.sc = sc.name; }
+  if (!state.scan || state.scan.sc !== sc.name) { const d = await api(`/api/${sc.name}/scan`); fresh(my); state.scan = d; state.scan.sc = sc.name; }
   drawGraph(state.scan.graph);
   stripFromScan(state.scan);
   $("#graphnote").textContent = "hover a node for details";
@@ -366,6 +375,7 @@ async function showGate() {
     document.querySelectorAll("[data-mode]").forEach((b) => b.classList.toggle("on", b.dataset.mode === mode));
     $("#replay").innerHTML = `<p class="muted">Running session (starts real MCP servers)…</p>`;
     const r = await api(`/api/${sc.name}/replay?attack=${encodeURIComponent($("#attack").value)}&mode=${mode}`);
+    if (my !== state.seq || state.tab !== "gate") return;
     const steps = r.steps.map((s, i) => `
       <div class="card" data-i="${i}">
         <div class="step"><b>#${s.seq}</b><div><b>${esc(s.agent)}</b> → <span class="route">${esc(s.tool)}</span><div class="muted">${esc(s.note)}</div></div>
@@ -376,8 +386,10 @@ async function showGate() {
     const banner = r.leaked_via.length
       ? `<div class="banner bad">Secret left through ${esc(r.leaked_via.join(", "))}</div>`
       : `<div class="banner good">The secret did not leave. ${r.blocked} blocked, ${r.unreachable} impossible.</div>`;
-    $("#replay").innerHTML = `${r.repair.length ? `<p class="muted">Repair applied: ${esc(r.repair.join("; "))}</p>` : ""}${banner}${steps}`;
-    const label = { nogate: "No gate", gate: "Gate on", after: "After repair" }[mode];
+    const repairNote = r.repair.length ? `<p class="muted">Repair applied: ${esc(r.repair.join("; "))}</p>`
+      : mode === "after" ? `<p class="muted">No configuration change removes every flow while keeping every task's tools and data, so nothing was applied: the runtime gate is the protection.</p>` : "";
+    $("#replay").innerHTML = `${repairNote}${banner}${steps}`;
+    const label = { nogate: "No gate", gate: "Gate on", after: r.repair.length ? "After repair" : "No safe repair: gate only" }[mode];
     if (r.leaked_via.length) tile("#t3", "bad", `Runtime gate · ${label}`, `secret leaked ${r.leaked_via.length}×`, `via ${r.leaked_via.join(", ")}`);
     else tile("#t3", "good", `Runtime gate · ${label}`, "secret stayed in", `${r.blocked} blocked · ${r.unreachable} impossible`);
     document.querySelectorAll("#replay .card").forEach((c) => c.onclick = () => {
@@ -390,11 +402,15 @@ async function showGate() {
 }
 
 async function show() {
+  const my = ++state.seq;
   try {
-    if (state.tab === "scan") { await showScan(); state.scan.sc = $("#scenario").value; }
-    else if (state.tab === "repair") await showRepair();
-    else await showGate();
-  } catch (e) { $("#side").innerHTML = `<p class="bad">Error: ${esc(e.message)}</p>`; }
+    if (state.tab === "scan") { await showScan(my); state.scan.sc = $("#scenario").value; }
+    else if (state.tab === "repair") await showRepair(my);
+    else await showGate(my);
+  } catch (e) {
+    if (e instanceof Stale) return;
+    $("#side").innerHTML = `<p class="bad">Error: ${esc(e.message)}</p>`;
+  }
 }
 
 (async () => {

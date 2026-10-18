@@ -4,9 +4,6 @@ propose_repair, recall
 → list_agents({})  {"result": [{"agent": "dispatcher", "purpose": "Route 
 incoming support work to the right agent and assemble replies."}, {"agent": 
 "notifier", "purpose": "Post …
-→ one_hop_scan({})  { "per_agent": { "dispatcher": [], "notifier": [ 
-"exfil_sink", "private_read" ], "records": [ "private_read" ], "web": [ 
-"untrusted_input" ] }, "agents_toxic_o…
 → agent_profile({"agent": "dispatcher"})  { "agent": "dispatcher", "purpose": 
 "Route incoming support work to the right agent and assemble replies.", 
 "tools_by_capability": { "none": [ "everything.echo…
@@ -19,54 +16,107 @@ customer records in the local support files.", "tools_by_capability": {
 → agent_profile({"agent": "web"})  { "agent": "web", "purpose": "Read public 
 GitHub issues filed by customers and save notes about them.", 
 "tools_by_capability": { "store_write": [ "memory.creat…
-→ check_tasks({})  { "broken": {} }
-→ find_toxic_flows({"include_unknown": true})  { "toxic": 2, "unknown": 0, 
-"flows": [ { "status": "TOXIC", "entry": "web", "reader": "notifier", "exit": 
-"notifier", "hops": 2, "path": [ "web", "dispatcher",…
-→ recall({"agent": "web"})  {"result": []}
 → recall({"agent": "dispatcher"})  {"result": []}
 → recall({"agent": "notifier"})  {"result": []}
 → recall({"agent": "records"})  {"result": []}
-→ search_repairs({"max_actions": 4, "top": 5})  { "repairs": [ { "cost": 3, 
-"actions": [ { "kind": "isolate", "a": "notifier", "b": "memory/notes" }, { 
-"kind": "quarantine", "a": "dispatcher", "b": "web" } ]…
+→ recall({"agent": "web"})  {"result": []}
+→ one_hop_scan({})  { "per_agent": { "dispatcher": [], "notifier": [ 
+"exfil_sink", "private_read" ], "records": [ "private_read" ], "web": [ 
+"untrusted_input" ] }, "agents_toxic_o…
+→ find_toxic_flows({"include_unknown": true})  { "toxic": 2, "unknown": 0, 
+"flows": [ { "status": "TOXIC", "entry": "web", "reader": "notifier", "exit": 
+"notifier", "hops": 2, "path": [ "web", "dispatcher",…
+→ check_tasks({})  { "broken": {} }
+→ search_repairs({"max_actions": 4, "top": 5})  { "repairs": [], 
+"rejected_single_actions": [ { "action": "make records return typed fields only 
+to dispatcher (ids/numbers/enums, no free text; schema enforce…
+→ tool_info({"tool": "github.get_issue"})  { "tool": "github.get_issue", 
+"capabilities": [ "untrusted_input" ], "why": "Issue/PR text and comments can be
+written by anyone on a public repo.", "descripti…
+→ tool_info({"tool": "memory.create_entities"})  { "tool": 
+"memory.create_entities", "capabilities": [ "store_write" ], "why": "Writes the 
+shared knowledge graph.", "description": "Create multiple new entitie…
+→ tool_info({"tool": "memory.read_graph"})  { "tool": "memory.read_graph", 
+"capabilities": [ "private_read", "store_read" ], "why": "Shared knowledge 
+graph; any agent mounting it can have written to it."…
+→ tool_info({"tool": "filesystem.read_text_file"})  { "tool": 
+"filesystem.read_text_file", "capabilities": [ "private_read", "store_read" ], 
+"why": "Local files (keys, .env, source). Other agents mounting the sa…
+→ tool_info({"tool": "slack.slack_post_message"})  { "tool": 
+"slack.slack_post_message", "capabilities": [ "exfil_sink" ], "why": "Posts text
+to channels, which can include shared or external channels.", "descr…
+→ find_toxic_flows({"include_unknown": false})  { "toxic": 2, "unknown": 0, 
+"flows": [ { "status": "TOXIC", "entry": "web", "reader": "notifier", "exit": 
+"notifier", "hops": 2, "path": [ "web", "dispatcher",…
+→ simulate_repair({"actions": [{"kind": "quarantine", "a": "dispatcher", "b": 
+"web"}]})  { "actions": [ "make web return typed fields only to dispatcher 
+(ids/numbers/enums, no free text; schema enforced outside ToxicFlow)" ], "cost":
+1, "removes_al…
+→ simulate_repair({"actions": [{"kind": "quarantine", "a": "dispatcher", "b": 
+"notifier"}]})  { "actions": [ "make notifier return typed fields only to 
+dispatcher (ids/numbers/enums, no free text; schema enforced outside ToxicFlow)"
+], "cost": 1, "remov…
+→ simulate_repair({"actions": [{"kind": "isolate", "a": "web", "b": 
+"memory/notes"}]})  { "actions": [ "give web its own instance of store 
+memory/notes" ], "cost": 2, "removes_all_flows": false, "flows_remaining": [ { 
+"status": "TOXIC", "entry": "…
+→ simulate_repair({"actions": [{"kind": "cut", "a": "dispatcher", "b": 
+"notifier"}]})  { "actions": [ "remove the delegation dispatcher -> notifier" ],
+"cost": 4, "removes_all_flows": false, "flows_remaining": [ { "status": "TOXIC",
+"entry": "web…
+→ simulate_repair({"actions": [{"kind": "quarantine", "a": "dispatcher", "b": 
+"web"}, {"kind": "quarantine", "a": "dispatcher", "b": "rec…)  { "actions": [ 
+"give web its own instance of store memory/notes", "make records return typed 
+fields only to dispatcher (ids/numbers/enums, no free text; schema…
+→ simulate_repair({"actions": [{"kind": "revoke", "a": "web", "b": 
+"store_write"}]})  { "actions": [ "revoke every 'store_write' tool from web" ], 
+"cost": 3, "removes_all_flows": false, "flows_remaining": [ { "status": "TOXIC",
+"entry": "web", "…
 → simulate_repair({"actions": [{"kind": "isolate", "a": "notifier", "b": 
-"memory/notes"}, {"kind": "quarantine", "a": "dispatcher", "b": …)  { "actions":
-[ "give notifier its own instance of store memory/notes", "make web return 
-structured results only to dispatcher (no free text)" ], "cost": 3, "re…
-→ propose_repair({"actions": [{"kind": "isolate", "a": "notifier", "b": 
-"memory/notes"}, {"kind": "quarantine", "a": "dispatcher", "b": …)  { 
-"proposal": "prop-20261018T091413733749", "status": "pending human approval", 
-"simulation": { "actions": [ "give notifier its own instance of store memory/no…
+"memory/notes"}]})  { "actions": [ "give notifier its own instance of store 
+memory/notes" ], "cost": 2, "removes_all_flows": false, "flows_remaining": [ { 
+"status": "TOXIC", "entr…
+→ simulate_repair({"actions": [{"kind": "quarantine", "a": "dispatcher", "b": 
+"web"}, {"kind": "quarantine", "a": "dispatcher", "b": "rec…)  { "actions": [ 
+"give web its own instance of store memory/notes", "make notifier return typed 
+fields only to dispatcher (ids/numbers/enums, no free text; schem…
+→ simulate_repair({"actions": [{"kind": "cut", "a": "dispatcher", "b": "web"}, 
+{"kind": "cut", "a": "dispatcher", "b": "records"}]})  { "actions": [ "remove 
+the delegation dispatcher -> records", "remove the delegation dispatcher -> web"
+], "cost": 8, "removes_all_flows": false, "flows_remain…
+→ propose_repair({"actions": [{"kind": "isolate", "a": "web", "b": 
+"memory/notes"}, {"kind": "quarantine", "a": "dispatcher", "b": "web"…)  ERROR: 
+Error executing tool propose_repair: proposal rejected by simulation: 
+{'actions': ['give web its own instance of store memory/notes', 'make notifier 
+ret…
 ───────────────────────────────── Investigator ─────────────────────────────────
 ## Findings
 
-- I checked prior findings for `web`, `dispatcher`, `notifier`, and `records`; 
-none were recorded.
-- The per-agent scan found no agent toxic on its own: `web` has 
-`untrusted_input`, `records` has `private_read`, and `notifier` has 
-`private_read` plus `exfil_sink`. The multi-hop scan found **two toxic flows**; 
-neither was `UNKNOWN`.
+- Earlier-session recall for `dispatcher`, `notifier`, `records`, and `web` 
+returned no findings or fixes.
+- The per-agent scan found no agent toxic on its own: it saw `web` with 
+`untrusted_input`, `records` and `notifier` with `private_read`, and `notifier` 
+with `exfil_sink`. The multi-hop search found **two toxic flows**; neither was 
+`UNKNOWN`.
+- Most dangerous path: `web` reads untrusted content via `github.get_issue` → 
+reports to `dispatcher` → `dispatcher` instructs `notifier` → `notifier` reads 
+private `memory/notes` via `memory.read_graph` and can send data through 
+`slack.slack_post_message`.
+- The other flow starts at `web` and reaches `records` via `dispatcher`; 
+`records` can read private `filesystem/records` via `filesystem.read_text_file`,
+with the path continuing through `dispatcher` to `notifier` and its Slack sink.
 
-## Most dangerous flow
+## Repair
 
-Untrusted content from `github.get_issue` at `web` can travel via `dispatcher` 
-to `notifier`, which reads private data with `memory.read_graph` and can send it
-out using `slack.slack_post_message`. The scan also found a route involving 
-`records` and its private `filesystem.read_text_file` data, with the same 
-delegated path: `web` → `dispatcher` → `notifier`. The shared `memory/notes` 
-store is written by `web` and read by `notifier`.
+No available repair was found that removes every flow while keeping every task 
+working. `search_repairs` returned no viable sets. The obvious single fixes are 
+insufficient or break tasks: typed-only returns leave flows; revoking required 
+read, input, or sink capabilities breaks tasks; and cutting required delegations
+breaks tasks without necessarily eliminating the shared-store route.
 
-## Repair proposed
+I simulated a containment attempt—isolating `web` from `memory/notes` and 
+quarantining the `dispatcher` delegations to `web`, `records`, and `notifier`. 
+It preserved tasks but **left both flows**. I called `propose_repair` once with 
+those actions; it was rejected by simulation. No repair was approved.
 
-I proposed isolating `notifier` from `memory/notes` and making `web` return 
-structured results only to `dispatcher`. Simulation confirmed **no remaining 
-flows and no broken tasks**. The proposal is pending human approval.
-
-Obvious single fixes are insufficient: making only `web` structured-only leaves 
-both flows, while making only `records` structured-only leaves one. Revoking key
-read or send capabilities, or removing required delegations, breaks tasks.
-
-15 tool calls via MCP.
-Proposal prop-20261018T091413733749 is waiting for approval: toxicflow approve 
-support prop-20261018T091413733749
+29 tool calls via MCP.

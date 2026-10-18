@@ -8,6 +8,8 @@ from collections import defaultdict
 import yaml
 from falkordb import Graph
 
+from .graph import channel
+
 
 def export_scenario(g: Graph, original: dict) -> str:
     agents = []
@@ -26,12 +28,21 @@ def export_scenario(g: Graph, original: dict) -> str:
                 m["instance"] = instance
             mounts.append(m)
         dels = g.ro_query(
-            "MATCH (:Agent {id: $id})-[d:DELEGATES_TO]->(c:Agent) RETURN c.id, d.returns ORDER BY c.id",
+            "MATCH (:Agent {id: $id})-[d:DELEGATES_TO]->(c:Agent) RETURN c.id, d.returns, d.channel ORDER BY c.id",
             {"id": agent["id"]},
         ).result_set
         entry = {"id": agent["id"], "purpose": agent["purpose"], "mounts": mounts}
         if dels:
-            entry["delegates"] = [{"to": c, "returns": r} for c, r in dels]
+            orig = {d["to"]: d for d in agent.get("delegates", [])}
+            entry["delegates"] = []
+            for c, r, ch in dels:
+                d = {"to": c, "returns": r}
+                if r == "structured":
+                    keep = orig.get(c, {}).get("fields")
+                    # a repair restricted this return to typed fields; the schema itself must be enforced by the deployment
+                    same = keep and channel({"to": c, "returns": "structured", "fields": keep}) == ch
+                    d["fields"] = keep if same else ({"result_id": "id", "status": "enum"} if ch == "data" else {"status": "enum"})
+                entry["delegates"].append(d)
         agents.append(entry)
     out = {k: v for k, v in original.items() if k != "agents"}
     out["agents"] = agents

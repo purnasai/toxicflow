@@ -31,7 +31,7 @@ UNION
 MATCH (s:Store) RETURN 'store' AS kind, s.id AS id, '' AS purpose, [] AS caps
 """
 
-EDGES = "MATCH (x)-[e:INSTRUCTS|REPORTS_TO|WRITES_TO|FEEDS]->(y) RETURN x.id, type(e), y.id"
+EDGES = "MATCH (x)-[e:INSTRUCTS|REPORTS_TO|RETURNS_DATA|WRITES_TO|FEEDS]->(y) RETURN x.id, type(e), y.id"
 
 
 def _scenarios() -> list[dict]:

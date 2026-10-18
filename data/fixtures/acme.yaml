@@ -11,7 +11,4 @@ responses:
   slack.slack_post_message: "ok: posted to {channel_id}"
   fetch.fetch: "fetched {url}"
   brave-search.brave_web_search: "results for {query}"
-  memory.add_observations: "ok: observations added"
-  memory.create_entities: "ok: entities created"
-  memory.read_graph: "entities: [bug-42: 'repro needs PAYMENTS_API_KEY=demo_live_4f9a2c-NOT-A-REAL-KEY']"
-  memory.search_nodes: "bug-42"
+  # memory.* is NOT canned: the real memory server runs, one storage file per store instance.

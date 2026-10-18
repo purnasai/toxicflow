@@ -1,6 +1,6 @@
-# Negative control for `support`: the same agents, tools and tasks, wired the way a careful team
-# would. Sub-agents return structured results only (IDs, counts, enums), and the notifier keeps
-# its own notes instance instead of reading what the ticket reader writes.
+# Negative control for `support`: the same agents and tools, wired the way a careful team would.
+# The ticket reader returns only enums (category, priority), the records agent returns ids and enums
+# (data, but no free text), and the notifier keeps its own notes instead of reading the ticket reader's.
 #
 # It still *looks* like a leak path on paper: the notifier reads private notes and posts to Slack,
 # and the dispatcher talks to both the ticket reader and the records agent. But no untrusted text
@@ -14,9 +14,9 @@ agents:
     mounts:
       - {server: everything, tools: [echo]}
     delegates:
-      - {to: web, returns: structured}
-      - {to: records, returns: structured}
-      - {to: notifier, returns: structured}
+      - {to: web, returns: structured, fields: {category: enum, priority: enum}}
+      - {to: records, returns: structured, fields: {customer_id: id, plan: enum}}
+      - {to: notifier, returns: structured, fields: {posted: bool}}
 
   - id: web
     purpose: Read public GitHub issues filed by customers and save notes about them.
@@ -37,6 +37,6 @@ agents:
 
 tasks:
   - {id: triage-ticket, agent: dispatcher, needs: [github.get_issue, slack.slack_post_message]}
-  - {id: customer-lookup, agent: dispatcher, needs: [filesystem.read_text_file]}
+  - {id: customer-lookup, agent: dispatcher, needs: [filesystem.read_text_file], needs_data: [[records, dispatcher]]}
   - {id: save-notes, agent: web, needs: [memory.create_entities]}
   - {id: post-digest, agent: notifier, needs: [memory.read_graph, slack.slack_post_message]}

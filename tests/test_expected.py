@@ -8,7 +8,7 @@ from toxicflow import reference as R
 from toxicflow.analyze import flows, one_hop_findings
 from toxicflow.gate import Gate
 from toxicflow.labels import DATA
-from toxicflow.repair import Action, apply_repair, search
+from toxicflow.repair import search
 
 EXPECTED = yaml.safe_load((DATA / "expected.yaml").read_text())["scenarios"]
 NAMES = list(EXPECTED)
@@ -44,16 +44,16 @@ def test_support_is_invisible_to_per_agent_checks(loaded):
 
 
 def test_one_permission_change_removes_the_risk_but_breaks_work(db, loaded):
-    """support: revoking the ticket reader's untrusted input closes both routes but breaks triage;
-    the selected two-change repair (same cost) closes both routes and keeps every task."""
+    """support: revoking the ticket reader's untrusted input closes both routes but breaks triage. The old
+    cost-3 repair (typed returns + store isolation) leaves a flow: an injected ticket reader can still put
+    customer data into its typed return, which the dispatcher forwards to the notifier."""
     sc, g = loaded("support")
     st = R.from_scenario(sc)
     one = R.apply(st, [R.Act("revoke", "web", "untrusted_input")])
     assert R.flows(one) == set() and "triage-ticket" in R.broken_tasks(one)
-    best = search(db, g)[0][0]
-    assert len(best.actions) == 2 and Action("quarantine", "dispatcher", "web") in best.actions
-    result = apply_repair(db, g, best.actions)
-    assert result.ok
+    old = R.apply(st, [R.Act("quarantine", "dispatcher", "web"), R.Act("isolate", "notifier", "memory/notes")])
+    assert R.flows(old) == {("web", "records", "notifier")} and R.broken_tasks(old) == {}
+    assert search(db, g)[0] == []
 
 
 def test_structured_returns_and_separate_store_remove_the_flow(loaded):
@@ -66,8 +66,6 @@ def test_structured_returns_and_separate_store_remove_the_flow(loaded):
 @pytest.mark.parametrize("name,case", CASES, ids=[f"{n}:{c['name'][:40]}" for n, c in CASES])
 def test_gate_decisions_match_expected(db, loaded, name, case):
     _, g = loaded(name)
-    if case.get("repaired"):
-        apply_repair(db, g, search(db, g)[0][0].actions)
     gate = Gate(g, f"t-{uuid.uuid4().hex[:6]}")
     got = []
     for agent, tool, _ in case["steps"]:

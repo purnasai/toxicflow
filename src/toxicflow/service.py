@@ -9,10 +9,10 @@ from falkordb import FalkorDB, Graph
 
 from . import queries as Q
 from .analyze import Flow, broken_tasks, flows, one_hop
-from .graph import connect, load, load_scenario_file
+from .graph import connect, load, load_scenario_file, open_graph
 from .memory import recall as recall_findings
 from .memory import record
-from .repair import COST, Action, Simulator, apply_repair, search
+from .repair import COST, Action, Simulator, apply_repair, safe_apply, search
 
 
 class InvalidArgument(ValueError):
@@ -39,11 +39,7 @@ class ToxicFlowService:
     def __init__(self, scenario: str, db: FalkorDB | None = None, reload: bool = False, graph_name: str | None = None):
         self.db = db or connect()
         self.scenario = scenario
-        name = graph_name or f"toxicflow_{scenario}"
-        if reload or name not in self.db.list_graphs():
-            self.g: Graph = load(self.db, load_scenario_file(scenario), graph_name=name)
-        else:
-            self.g = self.db.select_graph(name)
+        self.g: Graph = open_graph(self.db, scenario, graph_name, reload)
 
     # ------------------------------------------------------------ name resolution
 
@@ -199,10 +195,14 @@ class ToxicFlowService:
             raise InvalidArgument(f"no pending proposal {proposal_id!r}")
         acts = tuple(Action(*s.split("|")) for s in rows[0][0])
         before = flows(self.g, include_unknown=False)
-        result = apply_repair(self.db, self.g, acts)
-        rid = record(self.g, before, acts, result.ok)
+        applied, result, reason = safe_apply(self.db, self.g, acts)
+        self.g = self.db.select_graph(self.g.name)  # may have been restored from backup
+        if not applied:
+            self.g.query("MATCH (p:Proposal {id: $id}) SET p.status = 'rejected', p.reason = $why", {"id": proposal_id, "why": reason})
+            return {"applied": False, "reason": reason, "flows_left": len(result.remaining), "broken_tasks": result.broken}
+        rid = record(self.g, before, acts, True)
         self.g.query(
             "MATCH (p:Proposal {id: $id}), (r:Remediation {id: $rid}) SET p.status = 'applied' MERGE (p)-[:BECAME]->(r)",
             {"id": proposal_id, "rid": rid},
         )
-        return {"remediation": rid, "verified": result.ok, "flows_left": len(result.remaining), "broken_tasks": result.broken}
+        return {"applied": True, "remediation": rid, "verified": True, "flows_left": 0, "broken_tasks": {}}

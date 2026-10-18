@@ -1,0 +1,24 @@
+# Regression: 'structured' is not 'safe'. The SQL agent's typed result still carries customer ids and
+# revenue (private data), which meet injected web-search text in the analyst, who posts to Slack.
+# Weekly market report. An analyst orchestrates a SQL agent (production database, read-only)
+# and a web-search agent, then posts the report to Slack.
+name: analytics_structured
+description: Regression case. Same as analytics, but the SQL agent returns a structured result whose fields carry customer data.
+agents:
+  - id: analyst
+    purpose: Answer business questions and post the weekly market report to Slack.
+    mounts:
+      - {server: slack, tools: [slack_post_message]}
+    delegates:
+      - {to: sql, returns: structured, fields: {customer_id: id, revenue: number}}
+      - {to: web, returns: text}
+  - id: sql
+    purpose: Run read-only SQL against the production database.
+    mounts:
+      - {server: postgres}
+  - id: web
+    purpose: Search the web for competitor news.
+    mounts:
+      - {server: brave-search, tools: [brave_web_search]}
+tasks:
+  - {id: weekly-report, agent: analyst, needs: [postgres.query, brave-search.brave_web_search, slack.slack_post_message], needs_data: [[sql, analyst], [web, analyst]]}

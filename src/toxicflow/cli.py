@@ -24,10 +24,10 @@ from rich.table import Table
 
 from .analyze import broken_tasks, flows, one_hop
 from .export import export_scenario, mount_diff
-from .graph import connect, load, load_scenario_file
+from .graph import connect, load, load_scenario_file, open_graph
 from .labels import DATA
 from .memory import recall, record
-from .repair import apply_repair, search
+from .repair import safe_apply, search
 
 console = Console()
 TRIAD = ("untrusted_input", "private_read", "exfil_sink")
@@ -36,13 +36,9 @@ TRIAD = ("untrusted_input", "private_read", "exfil_sink")
 def cmd_scan(args) -> int:
     db = connect()
     name = f"toxicflow_{args.scenario}"
-    if args.reload or name not in db.list_graphs():
-        g = load(db, load_scenario_file(args.scenario))
-        console.print(f"[dim]graph {name}: loaded fresh from data/scenarios/{args.scenario}.yaml[/dim]")
-    else:
-        g = db.select_graph(name)
-        applied = g.ro_query("MATCH (r:Remediation) RETURN count(r)").result_set[0][0]
-        console.print(f"[dim]graph {name}: existing state, {applied} applied remediation(s); use --reload to start from the YAML[/dim]")
+    g = open_graph(db, args.scenario, reload=args.reload)
+    applied = g.ro_query("MATCH (r:Remediation) RETURN count(r)").result_set[0][0]
+    console.print(f"[dim]graph {name}: {applied} applied remediation(s); use --reload to start again from the scenario file[/dim]")
 
     t = Table(title="Per-agent view (what a one-hop scanner sees)")
     for col in ("agent", *TRIAD, "verdict"):
@@ -69,8 +65,9 @@ def cmd_scan(args) -> int:
 
 def cmd_repair(args) -> int:
     db = connect()
+    name = f"toxicflow_{args.scenario}"
     scenario = load_scenario_file(args.scenario)
-    g = load(db, scenario)
+    g = open_graph(db, args.scenario, reload=args.reload)  # keeps approved repairs; the search only uses copies
     before = flows(g, include_unknown=False)
     if not before:
         console.print("[green]No toxic flows.[/green]")
@@ -95,8 +92,12 @@ def cmd_repair(args) -> int:
     if not args.apply:
         return 0
     chosen = solutions[0]
-    result = apply_repair(db, g, chosen.actions)
-    verified = result.ok
+    applied, result, reason = safe_apply(db, g, chosen.actions)
+    g = db.select_graph(name)
+    if not applied:
+        console.print(f"[red]Not applied: {reason}[/red]")
+        return 4
+    verified = True
     rid = record(g, before, chosen.actions, verified)
     console.print(f"\nApplied repair 1 to graph {g.name}: verified={verified} (flows left {len(result.remaining)}, broken tasks {result.broken})")
     console.print(f"Recorded as {rid}")
@@ -152,6 +153,7 @@ def main(argv: list[str] | None = None) -> int:
     r = sub.add_parser("repair")
     r.add_argument("scenario")
     r.add_argument("--apply", action="store_true")
+    r.add_argument("--reload", action="store_true", help="discard applied repairs and reload from the scenario file")
     r.add_argument("--max-actions", type=int, default=4)
     r.add_argument("--top", type=int, default=5)
     m = sub.add_parser("recall")

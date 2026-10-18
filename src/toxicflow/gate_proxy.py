@@ -25,12 +25,14 @@ from rich.console import Console
 from rich.table import Table
 
 from .gate import Decision, FixtureBackend, Gate, fixture_path
-from .queries import INFLUENCE, MAX_HOPS
+from .queries import DATAFLOW, MAX_HOPS
 
 REACHES = f"""
-MATCH p = (:Agent {{id: $src}})-[:{INFLUENCE}*0..{MAX_HOPS}]->(:Agent {{id: $dst}})
+MATCH p = (:Agent {{id: $src}})-[:{DATAFLOW}*0..{MAX_HOPS}]->(:Agent {{id: $dst}})
 RETURN [n IN nodes(p) | n.id] ORDER BY length(p) LIMIT 1
 """
+
+INSTANCE_OF = "MATCH (:Agent {id: $agent})-[c:CAN_CALL]->(:Tool {id: $tool}) RETURN c.instance"
 from .labels import DATA
 from .service import ToxicFlowService
 
@@ -45,6 +47,15 @@ def seed_sandbox() -> None:
     proj.mkdir(parents=True, exist_ok=True)
     (proj / ".env").write_text("PAYMENTS_API_KEY=demo_live_4f9a2c-NOT-A-REAL-KEY\nDB_PASSWORD=hunter2-demo\n")
     (proj / "app.py").write_text("def total(items):\n    return sum(i.price for i in items)  # bug: ignores quantity\n")
+    mem = SANDBOX / "memory"  # fresh store files for every run
+    mem.mkdir(parents=True, exist_ok=True)
+    for f in mem.glob("*.json"):
+        f.unlink()
+
+
+def instance_of(g, agent: str, tool: str) -> str:
+    rows = g.ro_query(INSTANCE_OF, {"agent": agent, "tool": tool}).result_set
+    return rows[0][0] if rows else "default"
 
 
 class Backends:
@@ -61,28 +72,37 @@ class Backends:
     async def __aexit__(self, *exc):
         await self.stack.__aexit__(*exc)
 
-    async def start(self, tools: list[str]) -> None:
-        """Start every real downstream server these tools need, in the caller's task.
+    async def start(self, calls: list[tuple[str, str]]) -> None:
+        """Start every real downstream server these (tool, instance) pairs need, in the caller's task.
         (Starting them lazily inside a request handler breaks anyio cancel scopes.)"""
-        for server in sorted({t.split(".", 1)[0] for t in tools if not self.fixtures.handles(t)}):
-            await self._session(server)
+        for tool, instance in sorted(set(calls)):
+            if not self.fixtures.handles(tool):
+                await self._session(tool.split(".", 1)[0], instance)
 
-    async def _session(self, server: str) -> ClientSession:
-        if server not in self.sessions:
+    def _key(self, server: str, instance: str) -> str:
+        spec = self.specs[server]
+        aware = "{INSTANCE}" in json.dumps([spec.get("args", []), spec.get("env", {})])
+        return f"{server}/{instance}" if aware else server  # instance-aware servers get one process per instance
+
+    async def _session(self, server: str, instance: str = "default") -> ClientSession:
+        key = self._key(server, instance)
+        if key not in self.sessions:
             spec = self.specs[server]
-            args = [a.replace("{SANDBOX}", str(SANDBOX)) for a in spec.get("args", [])]
-            params = StdioServerParameters(command=spec["command"], args=args, env={**os.environ, **spec.get("env", {})})
+            fill = lambda v: v.replace("{SANDBOX}", str(SANDBOX)).replace("{INSTANCE}", instance.replace("/", "_"))  # noqa: E731
+            args = [fill(a) for a in spec.get("args", [])]
+            env = {k: fill(v) for k, v in spec.get("env", {}).items()}
+            params = StdioServerParameters(command=spec["command"], args=args, env={**os.environ, **env})
             read, write = await self.stack.enter_async_context(stdio_client(params))
             session = await self.stack.enter_async_context(ClientSession(read, write))
             await session.initialize()
-            self.sessions[server] = session
-        return self.sessions[server]
+            self.sessions[key] = session
+        return self.sessions[key]
 
-    async def call(self, tool: str, args: dict) -> tuple[str, bool]:
+    async def call(self, tool: str, args: dict, instance: str = "default") -> tuple[str, bool]:
         if self.fixtures.handles(tool):
             return await self.fixtures.call(tool, args), False
         server, name = tool.split(".", 1)
-        result = await (await self._session(server)).call_tool(name, args)
+        result = await (await self._session(server, instance)).call_tool(name, args)
         text = "\n".join(getattr(c, "text", "") for c in result.content)
         return text, bool(getattr(result, "is_error", False) or getattr(result, "isError", False))
 
@@ -130,7 +150,9 @@ def serve(scenario: str, agent: str, session: str) -> None:
         console.print(f"[dim]#{seq}[/dim] {agent} {tool}: {d.status} {d.reason}")
         if not d.allowed:
             return types.CallToolResult(content=[types.TextContent(type="text", text=_blocked_text(tool, d))], isError=True)
-        text, err = await backends.call(tool, args)
+        text, err = await backends.call(tool, args, instance_of(svc.g, agent, tool))
+        if err:
+            gate.mark_failed(seq)
         return types.CallToolResult(content=[types.TextContent(type="text", text=text)], isError=err)
 
     server = Server(f"toxicflow-gate-{agent}", on_list_tools=on_list_tools, on_call_tool=on_call_tool)
@@ -138,7 +160,7 @@ def serve(scenario: str, agent: str, session: str) -> None:
     async def main():
         global backends
         async with Backends(scenario) as b:
-            await b.start(allowed_tools())
+            await b.start([(t, instance_of(svc.g, agent, t)) for t in allowed_tools()])
             backends = b
             async with stdio_server() as (read, write):
                 await server.run(read, write, server.create_initialization_options())
@@ -156,7 +178,7 @@ async def _replay(scenario: str, attack: dict, session: str, svc: ToxicFlowServi
     gate = Gate(svc.g, session)
     rows = []
     async with Backends(scenario) as b:
-        await b.start([s["tool"] for s in attack["steps"]])
+        await b.start([(s["tool"], instance_of(svc.g, s["agent"], s["tool"])) for s in attack["steps"]])
         for i, step in enumerate(attack["steps"], 1):
             agent, tool = step["agent"], step["tool"]
             args = json.loads(json.dumps(step.get("args", {})).replace("{SANDBOX}", str(SANDBOX)))
@@ -177,7 +199,9 @@ async def _replay(scenario: str, attack: dict, session: str, svc: ToxicFlowServi
             seq = gate.record(agent, tool, d, args)
             out = ""
             if d.allowed:
-                out, _ = await b.call(tool, args)
+                out, err = await b.call(tool, args, instance_of(svc.g, agent, tool))
+                if err:
+                    gate.mark_failed(seq)
             rows.append((seq, agent, tool, step.get("note", ""), d, out))
     return rows
 
@@ -189,7 +213,17 @@ def run_replay(scenario: str, attack_name: str, mode: str = "gate", graph_name: 
         raise ValueError("mode must be nogate, gate or after")
     seed_sandbox()
     attack = yaml.safe_load((DATA / "attacks" / f"{attack_name}.yaml").read_text())
-    svc = ToxicFlowService(scenario, reload=True, graph_name=graph_name)
+    if graph_name is None:
+        # Never touch the active graph (approved repairs, recorded sessions): replay on a disposable copy.
+        from .graph import connect, open_graph
+
+        db, graph_name = connect(), f"toxicflow_{scenario}__replay"
+        if graph_name in db.list_graphs():
+            db.select_graph(graph_name).delete()
+        open_graph(db, scenario).copy(graph_name)  # active state (loaded fresh if missing or out of date)
+        svc = ToxicFlowService(scenario, graph_name=graph_name)
+    else:
+        svc = ToxicFlowService(scenario, reload=True, graph_name=graph_name)
     repair = []
     if mode == "after":
         from .repair import apply_repair, search
@@ -205,7 +239,9 @@ def run_replay(scenario: str, attack_name: str, mode: str = "gate", graph_name: 
     secret = attack.get("secret", "\0")
     steps = []
     for (seq, agent, tool, note, d, result), step in zip(rows, attack["steps"]):
-        leaked = d.allowed and tool in sinks and secret in json.dumps(step.get("args", {}))
+        # grounded: the secret must have actually been obtained by the step this one depends on
+        present = "uses" not in step or secret in str(rows[step["uses"] - 1][5])
+        leaked = d.allowed and tool in sinks and secret in json.dumps(step.get("args", {})) and present
         steps.append(
             {
                 "seq": seq, "agent": agent, "tool": tool, "note": note, "status": d.status,

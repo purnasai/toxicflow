@@ -19,4 +19,4 @@ agents:
     mounts:
       - {server: brave-search, tools: [brave_web_search]}
 tasks:
-  - {id: weekly-report, agent: analyst, needs: [postgres.query, brave-search.brave_web_search, slack.slack_post_message]}
+  - {id: weekly-report, agent: analyst, needs: [postgres.query, brave-search.brave_web_search, slack.slack_post_message], needs_data: [[sql, analyst], [web, analyst]]}

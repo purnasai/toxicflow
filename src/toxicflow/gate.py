@@ -10,6 +10,7 @@ the same influence edges. After a repair, the gate's answer changes with the gra
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -19,7 +20,7 @@ import yaml
 from falkordb import Graph
 
 from .labels import DATA
-from .queries import INFLUENCE, MAX_HOPS, WITNESS
+from .queries import DATAFLOW, INFLUENCE, MAX_HOPS, WITNESS, WITNESS_DATA
 
 ENSURE_SESSION = "MERGE (s:Session {id: $sid}) ON CREATE SET s.started = $at"
 
@@ -37,20 +38,27 @@ TOOL_CAPS = "MATCH (t:Tool {id: $tool})-[:HAS_CAP]->(c:Capability) RETURN collec
 CAN_CALL = "MATCH (:Agent {id: $agent})-[r:CAN_CALL]->(:Tool {id: $tool}) RETURN count(r)"
 
 # Earlier in this session: an allowed untrusted read by x and an allowed private read by y,
-# in either order, whose results can meet in some agent m that can influence the caller.
+# in either order, such that x's content can steer some agent m (instruction-carrying edges),
+# y's data can reach m and m's data can reach the caller (data-carrying edges). Calls to unlabelled
+# tools count as both untrusted and private reads: unknown means "could be anything".
 # (FalkorDB note: a MATCH with parameters after an aggregating WITH returned no rows in
 # testing, so this query only uses WITH DISTINCT and call details are fetched separately.)
 TAINT_PATH = f"""
-MATCH (s:Session {{id: $sid}})-[:HAS_CALL]->(c1:Call {{decision: 'allow'}})-[:OF]->(:Tool)-[:HAS_CAP]->(:Capability {{name: 'untrusted_input'}})
+MATCH (s:Session {{id: $sid}})-[:HAS_CALL]->(c1:Call {{decision: 'allow'}})-[:OF]->(:Tool)-[:HAS_CAP]->(k1:Capability)
+WHERE k1.name IN ['untrusted_input', 'unknown']
+WITH DISTINCT s, c1
 MATCH (c1)-[:BY]->(x:Agent)
-MATCH (s)-[:HAS_CALL]->(c2:Call {{decision: 'allow'}})-[:OF]->(:Tool)-[:HAS_CAP]->(:Capability {{name: 'private_read'}})
+WITH DISTINCT s, x
+MATCH (s)-[:HAS_CALL]->(c2:Call {{decision: 'allow'}})-[:OF]->(:Tool)-[:HAS_CAP]->(k2:Capability)
+WHERE k2.name IN ['private_read', 'unknown']
+WITH DISTINCT x, c2
 MATCH (c2)-[:BY]->(y:Agent)
 WITH DISTINCT x, y
 MATCH (x)-[:{INFLUENCE}*0..{MAX_HOPS}]->(m:Agent)
 WITH DISTINCT x, y, m
-MATCH (y)-[:{INFLUENCE}*0..{MAX_HOPS}]->(m)
+MATCH (y)-[:{DATAFLOW}*0..{MAX_HOPS}]->(m)
 WITH DISTINCT x, y, m
-MATCH (m)-[:{INFLUENCE}*0..{MAX_HOPS}]->(:Agent {{id: $agent}})
+MATCH (m)-[:{DATAFLOW}*0..{MAX_HOPS}]->(:Agent {{id: $agent}})
 WITH DISTINCT x, y, m
 RETURN x.id, y.id, m.id
 """
@@ -58,13 +66,18 @@ RETURN x.id, y.id, m.id
 # Earliest call by an agent with a capability in this session (for the explanation).
 FIRST_CALL = """
 MATCH (:Session {id: $sid})-[:HAS_CALL]->(c:Call {decision: 'allow'})-[:BY]->(:Agent {id: $agent})
-MATCH (c)-[:OF]->(t:Tool)-[:HAS_CAP]->(:Capability {name: $cap})
+MATCH (c)-[:OF]->(t:Tool)-[:HAS_CAP]->(k:Capability) WHERE k.name IN $caps
 RETURN c.seq, t.id ORDER BY c.seq LIMIT 1
 """
 
+# A call whose downstream server returned an error read nothing; it must not count as a read.
+MARK_FAILED = "MATCH (:Session {id: $sid})-[:HAS_CALL]->(c:Call {seq: $seq}) SET c.decision = 'failed'"
+
 # Was this private read steered by earlier untrusted input? (flagged, not blocked)
 UNTRUSTED_UPSTREAM = f"""
-MATCH (s:Session {{id: $sid}})-[:HAS_CALL]->(c1:Call {{decision: 'allow'}})-[:OF]->(ut:Tool)-[:HAS_CAP]->(:Capability {{name: 'untrusted_input'}})
+MATCH (s:Session {{id: $sid}})-[:HAS_CALL]->(c1:Call {{decision: 'allow'}})-[:OF]->(ut:Tool)-[:HAS_CAP]->(k:Capability)
+WHERE k.name IN ['untrusted_input', 'unknown']
+WITH DISTINCT c1, ut
 MATCH (c1)-[:BY]->(x:Agent)
 MATCH p = (x)-[:{INFLUENCE}*0..{MAX_HOPS}]->(:Agent {{id: $agent}})
 RETURN c1.seq, ut.id, [n IN nodes(p) | n.id] ORDER BY length(p) LIMIT 1
@@ -96,10 +109,10 @@ class Gate:
         if caps & {"exfil_sink", "unknown"}:
             rows = self.g.ro_query(TAINT_PATH, {"sid": self.session, "agent": agent}).result_set
             if rows:
-                x, y, m = min(rows, key=lambda r: sum(len(self._witness(a, b)) for a, b in ((r[0], r[2]), (r[1], r[2]), (r[2], agent))))
-                s1, ut = self.g.ro_query(FIRST_CALL, {"sid": self.session, "agent": x, "cap": "untrusted_input"}).result_set[0]
-                s2, rt = self.g.ro_query(FIRST_CALL, {"sid": self.session, "agent": y, "cap": "private_read"}).result_set[0]
-                routes = {"untrusted": self._witness(x, m), "private": self._witness(y, m), "out": self._witness(m, agent)}
+                x, y, m = min(rows, key=lambda r: len(self._witness(r[0], r[2])) + len(self._witness(r[1], r[2], True)) + len(self._witness(r[2], agent, True)))
+                s1, ut = self.g.ro_query(FIRST_CALL, {"sid": self.session, "agent": x, "caps": ["untrusted_input", "unknown"]}).result_set[0]
+                s2, rt = self.g.ro_query(FIRST_CALL, {"sid": self.session, "agent": y, "caps": ["private_read", "unknown"]}).result_set[0]
+                routes = {"untrusted": self._witness(x, m), "private": self._witness(y, m, True), "out": self._witness(m, agent, True)}
                 path = _merge_paths(routes["untrusted"], routes["private"], routes["out"])
                 status = "BLOCK" if "exfil_sink" in caps else "BLOCK_UNKNOWN"
                 reason = (
@@ -109,15 +122,26 @@ class Gate:
                 if status == "BLOCK_UNKNOWN":
                     reason += " — tool is unlabelled, failing closed"
                 return Decision("block", status, reason, path, routes)
-        if "private_read" in caps:
+        if "unknown" in caps:
+            # Worst case: an unlabelled tool could read private data and send it out by itself, so any
+            # untrusted content that can steer the caller is enough to block it.
+            row = self.g.ro_query(UNTRUSTED_UPSTREAM, {"sid": self.session, "agent": agent}).result_set
+            if row:
+                s1, ut, path = row[0]
+                return Decision("block", "BLOCK_UNKNOWN",
+                                f"unlabelled tool under untrusted influence from call #{s1} ({ut}); failing closed", path)
+        if caps & {"private_read", "unknown"}:
             row = self.g.ro_query(UNTRUSTED_UPSTREAM, {"sid": self.session, "agent": agent}).result_set
             if row:
                 s1, ut, path = row[0]
                 return Decision("allow", "ALLOW_TAINTED", f"private read under untrusted influence from call #{s1} ({ut})", path)
         return Decision("allow", "ALLOW", "no toxic flow completed")
 
-    def _witness(self, src: str, dst: str) -> list[str]:
-        return self.g.ro_query(WITNESS, {"src": src, "dst": dst}).result_set[0][0]
+    def _witness(self, src: str, dst: str, data: bool = False) -> list[str]:
+        return self.g.ro_query(WITNESS_DATA if data else WITNESS, {"src": src, "dst": dst}).result_set[0][0]
+
+    def mark_failed(self, seq: int) -> None:
+        self.g.query(MARK_FAILED, {"sid": self.session, "seq": seq})
 
     def record(self, agent: str, tool: str, d: Decision, args: dict | None = None) -> int:
         seq = self.g.ro_query(NEXT_SEQ, {"sid": self.session}).result_set[0][0]
@@ -131,10 +155,20 @@ class Gate:
                 "at": _now(),
                 "decision": d.decision,
                 "reason": d.reason,
-                "args": json.dumps(args or {})[:500],
+                "args": json.dumps(redact(args or {})),
             },
         )
         return seq
+
+
+def redact(args: dict) -> dict:
+    """What the session log keeps about arguments: names, types, lengths and a short hash. Raw values
+    are never stored, so secrets passed to tools do not end up in the graph."""
+    out = {}
+    for k, v in args.items():
+        raw = v if isinstance(v, str) else json.dumps(v, sort_keys=True, default=str)
+        out[k] = {"type": type(v).__name__, "len": len(raw), "sha256": hashlib.sha256(raw.encode()).hexdigest()[:12]}
+    return out
 
 
 def _merge_paths(untrusted: list[str], data: list[str], out: list[str]) -> list[str]:

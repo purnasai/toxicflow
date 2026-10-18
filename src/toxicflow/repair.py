@@ -35,7 +35,7 @@ class Action:
 
     def describe(self) -> str:
         return {
-            "quarantine": f"make {self.b} return structured results only to {self.a} (no free text)",
+            "quarantine": f"make {self.b} return typed fields only to {self.a} (ids/numbers/enums, no free text; schema enforced outside ToxicFlow)",
             "isolate": f"give {self.a} its own instance of store {self.b}",
             "revoke": f"revoke every '{self.b}' tool from {self.a}",
             "cut": f"remove the delegation {self.a} -> {self.b}",
@@ -62,8 +62,10 @@ def candidates(flow: Flow) -> list[Action]:
     for src, rel, dst in flow.steps():
         if rel == "INSTRUCTS":
             acts.add(Action("cut", src, dst))
-        elif rel == "REPORTS_TO":  # child src reports to parent dst
+        elif rel == "REPORTS_TO":  # child src reports free text to parent dst
             acts.add(Action("quarantine", dst, src))
+            acts.add(Action("cut", dst, src))
+        elif rel == "RETURNS_DATA":  # child src returns typed data to parent dst; only cutting stops it
             acts.add(Action("cut", dst, src))
         elif rel == "WRITES_TO":
             acts.add(Action("isolate", src, dst))
@@ -143,11 +145,32 @@ def search(db: FalkorDB, base: Graph, max_actions: int = 4) -> tuple[list[Trial]
 
 
 def apply_repair(db: FalkorDB, g: Graph, actions: tuple[Action, ...]) -> Trial:
-    """Apply to the real graph, rebuild, and verify with the same queries."""
+    """Apply to the graph, rebuild, and verify with the same queries (no safety check; see safe_apply)."""
     for act in actions:
         act.apply(g)
     rebuild_derived(g)
     return Trial(actions, flows(g, include_unknown=False), broken_tasks(g))
+
+
+def safe_apply(db: FalkorDB, g: Graph, actions: tuple[Action, ...]) -> tuple[bool, Trial, str]:
+    """Validate against the graph's *current* state on a copy, then apply, re-verify, and roll back
+    if verification fails. Returns (applied, trial, reason). Nothing is changed unless it is safe."""
+    trial = Simulator(db, g).trial(tuple(actions))
+    if not trial.ok:
+        why = f"{len(trial.remaining)} flows would remain" if trial.remaining else f"would break tasks {trial.broken}"
+        return False, trial, f"rejected before applying: {why}"
+    backup = f"{g.name}__backup"
+    if backup in db.list_graphs():
+        db.select_graph(backup).delete()
+    g.copy(backup)
+    result = apply_repair(db, g, tuple(actions))
+    if result.ok:
+        db.select_graph(backup).delete()
+        return True, result, "applied and verified"
+    g.delete()
+    db.select_graph(backup).copy(g.name)
+    db.select_graph(backup).delete()
+    return False, result, "verification failed after applying; rolled back"
 
 
 def all_subsets(cands: list[Action], k: int):

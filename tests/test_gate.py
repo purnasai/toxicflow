@@ -64,11 +64,30 @@ def test_blocked_calls_do_not_count_as_reads(loaded):
 
 
 def test_after_repair_the_same_calls_pass(db, loaded):
-    _, g = loaded("acme")
+    _, g = loaded("github_solo")
     best = search(db, g)[0][0]
     apply_repair(db, g, best.actions)
-    d = run(g, [("triage", "github.get_issue"), ("coder", "filesystem.read_text_file"), ("triage", "slack.slack_post_message")])
-    assert d[2].status == "ALLOW"
+    d = run(g, [("maintainer", "github.get_issue"), ("maintainer", "github.create_issue")])
+    assert [x.status for x in d] == ["ALLOW", "ALLOW"]
+
+
+def test_failed_private_read_does_not_taint(loaded):
+    _, g = loaded("acme")
+    gate = Gate(g, f"t-{uuid.uuid4().hex[:6]}")
+    for agent, tool, failed in [("triage", "github.get_issue", False), ("coder", "filesystem.read_text_file", True)]:
+        seq = gate.record(agent, tool, gate.check(agent, tool))
+        if failed:
+            gate.mark_failed(seq)  # e.g. the file did not exist: nothing private was read
+    assert gate.check("triage", "slack.slack_post_message").status == "ALLOW"
+
+
+def test_session_log_never_stores_raw_arguments(loaded):
+    _, g = loaded("acme")
+    gate = Gate(g, f"t-{uuid.uuid4().hex[:6]}")
+    secret = "demo_live_4f9a2c-NOT-A-REAL-KEY"
+    gate.record("triage", "slack.slack_post_message", gate.check("triage", "slack.slack_post_message"), {"text": f"key={secret}"})
+    stored = g.ro_query("MATCH (c:Call) RETURN c.args").result_set[0][0]
+    assert secret not in stored and '"len"' in stored
 
 
 def test_unlabelled_sink_fails_closed(loaded):

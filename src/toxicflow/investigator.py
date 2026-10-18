@@ -68,11 +68,13 @@ def _summary(text: str, n: int = 160) -> str:
 
 def validate_reply(reply: str, svc: ToxicFlowService) -> list[str]:
     known = set()
-    for label in ("Agent", "Tool", "Store", "Capability"):
+    for label in ("Agent", "Tool", "Store", "Capability", "Task"):
         key = "name" if label == "Capability" else "id"
         known |= {r[0] for r in svc.g.ro_query(f"MATCH (n:{label}) RETURN n.{key}").result_set}
     known |= {r[0] for r in svc.g.ro_query("CALL db.relationshipTypes()").result_set}
     known |= {"TOXIC", "UNKNOWN", "text", "structured", "quarantine", "isolate", "revoke", "cut"}
+    known |= {"list_agents", "agent_profile", "tool_info", "one_hop_scan", "find_toxic_flows", "check_tasks",
+              "simulate_repair", "search_repairs", "propose_repair", "recall"}  # the MCP tools themselves
     bad = set()
     for tok in re.findall(r"`([^`\n]+)`", reply):
         if tok in known or re.fullmatch(r"prop-\w+", tok):

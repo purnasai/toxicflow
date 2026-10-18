@@ -37,7 +37,8 @@ agents:
 # `agent` is who the task is assigned to; the tool may be reached through delegation.
 tasks:
   - {id: daily-summary, agent: triage, needs: [github.list_issues, github.get_issue, slack.slack_post_message]}
-  - {id: fix-bug, agent: triage, needs: [filesystem.read_text_file, filesystem.edit_file, git.git_diff, git.git_commit]}
-  - {id: research, agent: triage, needs: [fetch.fetch]}
+  # needs_data: [producer, consumer] pairs; the consumer must still receive the producer's output.
+  - {id: fix-bug, agent: triage, needs: [filesystem.read_text_file, filesystem.edit_file, git.git_diff, git.git_commit], needs_data: [[coder, triage]]}
+  - {id: research, agent: triage, needs: [fetch.fetch], needs_data: [[researcher, triage]]}
   - {id: record-findings, agent: coder, needs: [memory.add_observations]}
-  - {id: standup-notes, agent: standup, needs: [memory.read_graph, slack.slack_post_message]}
+  - {id: standup-notes, agent: standup, needs: [memory.read_graph, slack.slack_post_message], needs_data: [[coder, standup]]}

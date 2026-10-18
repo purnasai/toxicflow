@@ -59,7 +59,7 @@ def load_model(db: FalkorDB, pm: ProjectModel, graph_name: str) -> Graph:
         """
         UNWIND $rows AS r
         MATCH (p:Agent {id: r.p}), (c:Agent {id: r.c})
-        CREATE (p)-[:DELEGATES_TO {returns: 'text'}]->(c)
+        CREATE (p)-[:DELEGATES_TO {returns: 'text', channel: 'text'}]->(c)  // subagents return free text
         """,
         {"rows": [{"p": p, "c": c} for p, c in pm.delegations]},
     )
