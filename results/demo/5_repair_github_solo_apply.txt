@@ -11,4 +11,4 @@ Applied repair 1 to graph toxicflow_github_solo: verified=True (flows left 0,
 broken tasks {})
 Recorded as rem-2026-10-18T10:29:23+00:00
 Patched config: 
-/home/ia-453/OFFICE/Graphs/t11-toxicflow/data/scenarios/github_solo.patched.yaml
+data/scenarios/github_solo.patched.yaml

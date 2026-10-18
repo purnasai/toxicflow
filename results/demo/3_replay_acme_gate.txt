@@ -1,5 +1,5 @@
 Secure MCP Filesystem Server running on stdio
-Client does not support MCP Roots, using allowed directories set from server args: [ '/home/ia-453/OFFICE/Graphs/t11-toxicflow/data/sandbox' ]
+Client does not support MCP Roots, using allowed directories set from server args: [ 'data/sandbox' ]
 Knowledge Graph MCP Server running on stdio
               Prompt injection in a public GitHub issue (gate on)               
 ┏━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┓
