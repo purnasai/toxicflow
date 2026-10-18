@@ -1,0 +1,76 @@
+graph toxicflow_acme: 0 applied remediation(s); use --reload to start again from
+the scenario file
+              Per-agent view (what a one-hop scanner sees)               
+┏━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┓
+┃ agent      ┃ untrusted_input ┃ private_read ┃ exfil_sink ┃ verdict    ┃
+┡━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━┩
+│ coder      │ -               │ yes          │ -          │ looks safe │
+│ researcher │ yes             │ -            │ yes        │ looks safe │
+│ standup    │ -               │ yes          │ yes        │ looks safe │
+│ triage     │ yes             │ -            │ yes        │ looks safe │
+└────────────┴─────────────────┴──────────────┴────────────┴────────────┘
+
+Multi-hop view: 8 toxic flows, 0 unknown
+TOXIC (1 hops) triage reads untrusted input, coder reads private data, both 
+reach triage, triage sends it out  
+    in : triage  via []
+    out: triage  via []
+    tools: untrusted=['github.get_issue', 'github.list_issues'] 
+private=['filesystem.directory_tree', 'filesystem.get_file_info', 
+'filesystem.list_directory'] sink=['slack.slack_post_message']
+TOXIC (2 hops) researcher reads untrusted input, coder reads private data, both 
+reach researcher, researcher sends it out  
+    in : researcher  via []
+    out: researcher  via []
+    tools: untrusted=['brave-search.brave_local_search', 
+'brave-search.brave_web_search', 'fetch.fetch'] 
+private=['filesystem.directory_tree', 'filesystem.get_file_info', 
+'filesystem.list_directory'] sink=['brave-search.brave_local_search', 
+'brave-search.brave_web_search', 'fetch.fetch']
+TOXIC (2 hops) researcher reads untrusted input, coder reads private data, both 
+reach triage, triage sends it out  
+    in : researcher -> triage  via ['REPORTS_TO']
+    out: triage  via []
+    tools: untrusted=['brave-search.brave_local_search', 
+'brave-search.brave_web_search', 'fetch.fetch'] 
+private=['filesystem.directory_tree', 'filesystem.get_file_info', 
+'filesystem.list_directory'] sink=['slack.slack_post_message']
+TOXIC (2 hops) triage reads untrusted input, coder reads private data, both 
+reach triage, researcher sends it out  
+    in : triage  via []
+    out: triage -> researcher  via ['INSTRUCTS']
+    tools: untrusted=['github.get_issue', 'github.list_issues'] 
+private=['filesystem.directory_tree', 'filesystem.get_file_info', 
+'filesystem.list_directory'] sink=['brave-search.brave_local_search', 
+'brave-search.brave_web_search', 'fetch.fetch']
+TOXIC (3 hops) triage reads untrusted input, coder reads private data, both 
+reach coder, standup sends it out  
+    in : triage -> coder  via ['INSTRUCTS']
+    out: coder -> memory/team-kb -> standup  via ['WRITES_TO', 'FEEDS']
+    tools: untrusted=['github.get_issue', 'github.list_issues'] 
+private=['filesystem.directory_tree', 'filesystem.get_file_info', 
+'filesystem.list_directory'] sink=['slack.slack_post_message']
+TOXIC (3 hops) triage reads untrusted input, standup reads private data, both 
+reach standup, standup sends it out  
+    in : triage -> coder -> memory/team-kb -> standup  via ['INSTRUCTS', 
+'WRITES_TO', 'FEEDS']
+    out: standup  via []
+    tools: untrusted=['github.get_issue', 'github.list_issues'] 
+private=['memory.read_graph', 'memory.search_nodes'] 
+sink=['slack.slack_post_message']
+TOXIC (4 hops) researcher reads untrusted input, coder reads private data, both 
+reach coder, standup sends it out  
+    in : researcher -> triage -> coder  via ['REPORTS_TO', 'INSTRUCTS']
+    out: coder -> memory/team-kb -> standup  via ['WRITES_TO', 'FEEDS']
+    tools: untrusted=['brave-search.brave_local_search', 
+'brave-search.brave_web_search', 'fetch.fetch'] 
+private=['filesystem.directory_tree', 'filesystem.get_file_info', 
+'filesystem.list_directory'] sink=['slack.slack_post_message']
+TOXIC (4 hops) researcher reads untrusted input, standup reads private data, 
+both reach standup, standup sends it out  
+    in : researcher -> triage -> coder -> memory/team-kb -> standup  via 
+['REPORTS_TO', 'INSTRUCTS', 'WRITES_TO', 'FEEDS']
+    out: standup  via []
+    tools: untrusted=['brave-search.brave_local_search', 
+'brave-search.brave_web_search', 'fetch.fetch'] private=['memory.read_graph', 
+'memory.search_nodes'] sink=['slack.slack_post_message']

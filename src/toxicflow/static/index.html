@@ -167,6 +167,7 @@ function drawGraph(graph, removed = [], ghosts = []) {
   cy = cytoscape({
     container: $("#cy"),
     elements: els,
+    maxZoom: 1.8,  // a one- or two-agent graph would otherwise be blown up to fill the panel
     layout: { name: "breadthfirst", directed: true, roots, spacingFactor: 1.2, padding: 24 },
     style: [
       { selector: "node", style: { "background-color": css("--panel"), "background-image": "data(svg)", "background-width": "100%", "background-height": "100%",

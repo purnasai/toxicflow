@@ -17,6 +17,8 @@ toxicflow investigate support --reload                # LLM agent investigates o
 toxicflow replay acme acme_injection --no-gate        # baseline: the injected issue leaks the secret 3 ways
 toxicflow replay acme acme_injection                  # runtime gate blocks all 3, each with its path
 toxicflow replay acme acme_injection --after-repair   # no safe repair exists here, so this is the gate alone
+toxicflow repair github_solo --apply                  # a case where a safe repair exists: cost 3, applied and re-verified
+toxicflow scan github_solo                            # 0 toxic flows, 1 applied remediation
 ```
 
 - `scan` shows the per-agent view first: no single agent holds all three capabilities. The multi-hop query then finds 8 flows of 1–4 hops. One goes `triage -> coder -> memory/team-kb -> standup`, with no delegation edge between coder and standup at all.

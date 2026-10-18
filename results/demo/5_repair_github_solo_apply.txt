@@ -1,0 +1,14 @@
+1 toxic flows. Single interventions that do not work:
+  x revoke every 'exfil_sink' tool from maintainer  ->  breaks tasks 
+{'answer-issues': ['github.add_issue_comment']}
+  x revoke every 'untrusted_input' tool from maintainer  ->  breaks tasks 
+{'answer-issues': ['github.get_issue']}
+
+Repairs that remove every flow and keep every task:
+  1. cost 3: revoke every 'private_read' tool from maintainer
+
+Applied repair 1 to graph toxicflow_github_solo: verified=True (flows left 0, 
+broken tasks {})
+Recorded as rem-2026-10-18T10:29:23+00:00
+Patched config: 
+/home/ia-453/OFFICE/Graphs/t11-toxicflow/data/scenarios/github_solo.patched.yaml

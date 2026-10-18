@@ -56,15 +56,33 @@ uv run toxicflow ui                    # http://localhost:8790
 uv run toxicflow investigate support --reload   # needs OPENAI_API_KEY via .env or TOXICFLOW_ENV_FILE
 ```
 
-## Demo video script (3:00 maximum)
-| Time | Screen | Narration |
-|---|---|---|
-| 0:00–0:15 | UI, `acme`, headline strip | "Four agents. Reviewed one at a time, all four look safe. FalkorDB's multi-hop query finds 8 toxic flows." |
-| 0:15–0:50 | Scan: click "triage + coder meet in coder, out via standup"; hover `coder` | "Injected issue text goes triage → coder; coder writes shared memory; standup reads it and posts to Slack. No delegation between coder and standup. Coder sits on all 8 routes." |
-| 0:50–1:30 | Repair tab | "Can we fix the config? 13 single fixes: restricting coder to typed fields still lets its data through; isolating the memory starves standup of coder's notes; revoking or cutting breaks a task. An exhaustive search over every combination confirms there is no safe configuration change here." |
-| 1:30–2:05 | Runtime gate: No gate → Gate on (click #5) | "So the gate protects instead. Scripted injection with real filesystem and memory servers: three leaks. Gate on: all three blocked, each with the graph path that justified it, while the fix-bug work still runs." |
-| 2:05–2:35 | Terminal: `results/investigate_support.txt` | "The agent works only through MCP tools over the graph: 29 calls, 9 simulated repairs, no safe one. Its proposal was rejected by the simulation guardrail, so nothing unsafe is applied." |
-| 2:35–3:00 | `results/EVAL.md` | "Across 8 scenarios with hand-written ground truth: per-agent checks miss 14 of 16 flows, the graph misses none, and a per-agent gate lets all 7 unsafe calls through while ours blocks them. We state exactly which defences are enforced and which are recommendations." |
+## Three-minute recording sequence (verified against the running UI and CLI on 2026-10-18)
+
+Before recording:
+- `docker compose up -d && uv run toxicflow ui`, then open http://localhost:8790 and **hard-refresh** (Ctrl+Shift+R).
+- Have a terminal with `results/investigate_support.txt` and `results/EVAL.md` open.
+- The first Gate-tab load starts the real MCP servers; click it once before recording so it is warm.
+
+| Time | Do this | On screen (verified) | Say |
+|---|---|---|---|
+| 0:00–0:12 | Scenario `acme`, tab **1 · Scan** | Strip: **4 / 4 look safe** vs **8 toxic flows · 1–4 hops** | "Four agents. Reviewed one at a time, all four look safe. FalkorDB's multi-hop query finds 8 toxic flows." |
+| 0:12–0:40 | Click the card **triage + coder meet in coder, out via standup · 3 hops**; hover **coder** | Routes animate `triage → coder`, `coder → memory/team-kb → standup`; hover card: *on the route of 8 of 8 flows* | "The injected issue goes from triage to coder. Coder writes the shared memory; standup reads it and posts to Slack. There is no delegation between coder and standup. Coder is on every route." |
+| 0:40–1:15 | Tab **2 · Repair** | Strip: **none is safe**. Table: typed returns → *8 flows remain*; isolating the KB → *breaks standup-notes: data coder>standup*; revokes and cuts → *breaks tasks* | "Can a config change fix it? Restricting coder to typed fields still lets its data through. Isolating the memory starves standup of coder's notes. Revoking or cutting breaks a task. An exhaustive search over every combination confirms there is no safe configuration change, so we don't pretend there is." |
+| 1:15–1:50 | Tab **3 · Runtime gate**: **No gate**, then **Gate on**, then click card **#5** | No gate: *Secret left through slack, fetch, slack*. Gate on: *The secret did not leave. 3 blocked*, steps #1–#4 and #7 allowed, #5 #6 #8 **BLOCK**; #5 shows its path | "So the gate protects instead. Filesystem and memory servers run for real. Without the gate the secret leaves three ways. With it, the three exfiltration calls are blocked, each with the graph path behind it, and the five legitimate calls still run." |
+| 1:50–2:15 | Scenario `github_solo`, tab **2 · Repair**, click **Show graph after repair** | Strip: **cost 3 → 0 flows · 0 tasks broken**; after repair the node loses its *private* pill | "When a safe change exists, ToxicFlow finds it: one GitHub agent, two single fixes break its job, and revoking the private-read tools removes the flow and keeps the task. `repair --apply` applies it and re-verifies." |
+| 2:15–2:38 | Terminal: `results/investigate_support.txt` (scroll to the end) | *29 tool calls via MCP*, *No available repair was found…*, *rejected by simulation* | "The agent works only through MCP tools over the graph: 29 calls, 9 simulated repairs. It tried one proposal; the simulation guardrail rejected it, so nothing unsafe is applied." |
+| 2:38–3:00 | `results/EVAL.md` | Detection totals, Repair table, Runtime table | "Across 8 scenarios with hand-written ground truth: per-agent checks miss 14 of 16 flows, the graph misses none. A per-agent gate lets all 7 unsafe calls through; ours blocks all 7 and allows all 34 legitimate ones." |
+
+### Claim → evidence
+| Claim | Evidence (run it or open it) |
+|---|---|
+| Per-agent: all safe; graph: 8 flows | `toxicflow scan acme --reload` → `results/demo/1_scan_acme.txt` |
+| No safe configuration repair for acme | `toxicflow repair acme` (13 rejected) → `results/demo/2_repair_acme.txt`; exhaustive check in `results/EVAL.md` (Repair: acme `None`) |
+| Gate blocks 3, allows 5 | `toxicflow replay acme acme_injection [--no-gate]` → `results/demo/3_replay_acme_*.txt` |
+| github_solo repair applied and verified | `toxicflow repair github_solo --apply`, then `toxicflow scan github_solo` → `results/demo/5_*.txt`, `6_*.txt`; `docs/ui-repair-github_solo.png` |
+| Agent and guardrail | `results/investigate_support.txt` |
+| Totals (16 flows, 34/7 runtime) | `toxicflow eval` → `results/EVAL.md` (fingerprint `bdc87c0637a0425f`) |
+| Memory isolation is real | `uv run pytest -q tests/test_isolation.py` |
 
 ## Submission checklist
 - [x] Public repository github.com/purnasai/toxicflow (**local commits not yet pushed**)

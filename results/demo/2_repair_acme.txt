@@ -1,0 +1,30 @@
+8 toxic flows. Single interventions that do not work:
+  x make coder return typed fields only to triage (ids/numbers/enums, no free 
+text; schema enforced outside ToxicFlow)  ->  8 flows remain
+  x make researcher return typed fields only to triage (ids/numbers/enums, no 
+free text; schema enforced outside ToxicFlow)  ->  7 flows remain
+  x give coder its own instance of store memory/team-kb  ->  breaks tasks 
+{'standup-notes': ['data coder>standup']}
+  x give standup its own instance of store memory/team-kb  ->  breaks tasks 
+{'standup-notes': ['data coder>standup']}
+  x revoke every 'private_read' tool from coder  ->  breaks tasks {'fix-bug': 
+['filesystem.read_text_file', 'git.git_diff']}
+  x revoke every 'exfil_sink' tool from researcher  ->  breaks tasks 
+{'research': ['fetch.fetch']}
+  x revoke every 'untrusted_input' tool from researcher  ->  breaks tasks 
+{'research': ['fetch.fetch']}
+  x revoke every 'exfil_sink' tool from standup  ->  breaks tasks 
+{'standup-notes': ['slack.slack_post_message']}
+  x revoke every 'private_read' tool from standup  ->  breaks tasks 
+{'standup-notes': ['memory.read_graph', 'data coder>standup']}
+  x revoke every 'exfil_sink' tool from triage  ->  breaks tasks 
+{'daily-summary': ['slack.slack_post_message']}
+  x revoke every 'untrusted_input' tool from triage  ->  breaks tasks 
+{'daily-summary': ['github.list_issues', 'github.get_issue']}
+  x remove the delegation triage -> coder  ->  breaks tasks {'fix-bug': 
+['git.git_commit', 'filesystem.edit_file', 'git.git_diff', 
+'filesystem.read_text_file', 'data coder>triage']}
+  x remove the delegation triage -> researcher  ->  breaks tasks {'research': 
+['fetch.fetch', 'data researcher>triage']}
+No repair within the action limit keeps every task working. Needs a human 
+decision.

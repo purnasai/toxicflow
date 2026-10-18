@@ -1,0 +1,10 @@
+graph toxicflow_github_solo: 1 applied remediation(s); use --reload to start 
+again from the scenario file
+              Per-agent view (what a one-hop scanner sees)               
+┏━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┓
+┃ agent      ┃ untrusted_input ┃ private_read ┃ exfil_sink ┃ verdict    ┃
+┡━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━┩
+│ maintainer │ yes             │ -            │ yes        │ looks safe │
+└────────────┴─────────────────┴──────────────┴────────────┴────────────┘
+
+Multi-hop view: 0 toxic flows, 0 unknown

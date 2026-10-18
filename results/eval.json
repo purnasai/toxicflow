@@ -11,7 +11,7 @@
   "graph_only_detections": 14,
   "flat_reference_identical": true,
   "repairs_agree_with_exact": 8,
-  "seconds": 26.9,
+  "seconds": 26.6,
   "D_runtime": {
    "falkordb_gate": {
     "authorized_allowed": 34,
@@ -48,7 +48,7 @@
     "edges": 400
    },
    "latency": {
-    "falkordb_flows_ms": 84.45,
+    "falkordb_flows_ms": 72.77,
     "flat_reference_ms": 0.05
    },
    "A_per_agent": {
@@ -95,8 +95,8 @@
     "single_fixes_rejected": 13,
     "single_fixes_breaking_tasks": 11,
     "single_fixes_leaving_flows": 2,
-    "search_ms": 1961.6,
-    "exact_ms": 28.5
+    "search_ms": 2148.6,
+    "exact_ms": 28.7
    },
    "D_runtime": {
     "policies": {
@@ -283,7 +283,7 @@
     "edges": 342
    },
    "latency": {
-    "falkordb_flows_ms": 33.2,
+    "falkordb_flows_ms": 25.51,
     "flat_reference_ms": 0.02
    },
    "A_per_agent": {
@@ -330,8 +330,8 @@
     "single_fixes_rejected": 8,
     "single_fixes_breaking_tasks": 6,
     "single_fixes_leaving_flows": 2,
-    "search_ms": 1958.2,
-    "exact_ms": 2.1
+    "search_ms": 1989.4,
+    "exact_ms": 3.2
    }
   },
   {
@@ -341,7 +341,7 @@
     "edges": 341
    },
    "latency": {
-    "falkordb_flows_ms": 47.56,
+    "falkordb_flows_ms": 27.84,
     "flat_reference_ms": 0.02
    },
    "A_per_agent": {
@@ -388,8 +388,8 @@
     "single_fixes_rejected": 7,
     "single_fixes_breaking_tasks": 6,
     "single_fixes_leaving_flows": 1,
-    "search_ms": 1024.2,
-    "exact_ms": 1.7
+    "search_ms": 1104.4,
+    "exact_ms": 1.2
    },
    "D_runtime": {
     "policies": {
@@ -473,8 +473,8 @@
     "edges": 337
    },
    "latency": {
-    "falkordb_flows_ms": 11.15,
-    "flat_reference_ms": 0.01
+    "falkordb_flows_ms": 10.54,
+    "flat_reference_ms": 0.02
    },
    "A_per_agent": {
     "tp": 1,
@@ -522,7 +522,7 @@
     "single_fixes_rejected": 3,
     "single_fixes_breaking_tasks": 3,
     "single_fixes_leaving_flows": 0,
-    "search_ms": 266.8,
+    "search_ms": 295.5,
     "exact_ms": 0.6
    },
    "D_replay": {
@@ -552,8 +552,8 @@
     "edges": 350
    },
    "latency": {
-    "falkordb_flows_ms": 14.93,
-    "flat_reference_ms": 0.04
+    "falkordb_flows_ms": 10.51,
+    "flat_reference_ms": 0.02
    },
    "A_per_agent": {
     "tp": 1,
@@ -617,8 +617,8 @@
     "single_fixes_rejected": 2,
     "single_fixes_breaking_tasks": 2,
     "single_fixes_leaving_flows": 0,
-    "search_ms": 297.9,
-    "exact_ms": 0.5,
+    "search_ms": 282.4,
+    "exact_ms": 0.3,
     "flows_before": 1,
     "flows_after": 0,
     "tasks_total": 1,
@@ -635,7 +635,7 @@
     "edges": 337
    },
    "latency": {
-    "falkordb_flows_ms": 3.14,
+    "falkordb_flows_ms": 3.68,
     "flat_reference_ms": 0.01
    },
    "A_per_agent": {
@@ -686,7 +686,7 @@
     "single_fixes_rejected": 0,
     "single_fixes_breaking_tasks": 0,
     "single_fixes_leaving_flows": 0,
-    "search_ms": 68.3,
+    "search_ms": 76.0,
     "exact_ms": 0.2,
     "flows_before": 0,
     "flows_after": 0,
@@ -772,8 +772,8 @@
     "edges": 364
    },
    "latency": {
-    "falkordb_flows_ms": 30.93,
-    "flat_reference_ms": 0.04
+    "falkordb_flows_ms": 29.73,
+    "flat_reference_ms": 0.02
    },
    "A_per_agent": {
     "tp": 0,
@@ -819,8 +819,8 @@
     "single_fixes_rejected": 9,
     "single_fixes_breaking_tasks": 7,
     "single_fixes_leaving_flows": 2,
-    "search_ms": 3324.3,
-    "exact_ms": 20.0,
+    "search_ms": 3343.4,
+    "exact_ms": 18.4,
     "single_fix_check": {
      "fix": [
       "revoke",
@@ -965,7 +965,7 @@
     "edges": 360
    },
    "latency": {
-    "falkordb_flows_ms": 2.72,
+    "falkordb_flows_ms": 2.91,
     "flat_reference_ms": 0.03
    },
    "A_per_agent": {
@@ -1016,7 +1016,7 @@
     "single_fixes_rejected": 0,
     "single_fixes_breaking_tasks": 0,
     "single_fixes_leaving_flows": 0,
-    "search_ms": 64.9,
+    "search_ms": 74.7,
     "exact_ms": 1.0,
     "flows_before": 0,
     "flows_after": 0,

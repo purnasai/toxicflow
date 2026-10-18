@@ -1,0 +1,18 @@
+graph toxicflow_github_solo: 0 applied remediation(s); use --reload to start 
+again from the scenario file
+             Per-agent view (what a one-hop scanner sees)             
+┏━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━┓
+┃ agent      ┃ untrusted_input ┃ private_read ┃ exfil_sink ┃ verdict ┃
+┡━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━┩
+│ maintainer │ yes             │ yes          │ yes        │ TOXIC   │
+└────────────┴─────────────────┴──────────────┴────────────┴─────────┘
+
+Multi-hop view: 1 toxic flows, 0 unknown
+TOXIC (0 hops) maintainer reads untrusted input, maintainer reads private data, 
+both reach maintainer, maintainer sends it out  
+    in : maintainer  via []
+    out: maintainer  via []
+    tools: untrusted=['github.get_file_contents', 'github.get_issue', 
+'github.get_pull_request'] private=['github.get_file_contents', 
+'github.get_pull_request_files', 'github.get_pull_request_status'] 
+sink=['github.add_issue_comment', 'github.create_branch', 'github.create_issue']
