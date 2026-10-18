@@ -25,7 +25,7 @@
   --ok: #4cc38a; --unknown: #e0b400; --chip: #242b36;
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+body { margin: 0; height: 100vh; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
 header { display: flex; align-items: center; gap: 16px; padding: 12px 20px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
 header h1 { font-size: 17px; margin: 0; letter-spacing: .2px; }
 header .sub { color: var(--muted); font-size: 13px; }
@@ -33,10 +33,22 @@ select, button { font: inherit; color: var(--ink); background: var(--chip); bord
 button { cursor: pointer; }
 button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
 nav { display: flex; gap: 6px; margin-left: auto; }
-main { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr); gap: 16px; padding: 16px 20px; height: calc(100vh - 58px); }
+main { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr); gap: 16px; padding: 0 20px 16px; flex: 1; min-height: 0; }
+#strip { display: grid; grid-template-columns: 1fr auto 1fr 1fr; gap: 12px; align-items: stretch; padding: 14px 20px; }
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; min-height: 76px; }
+.tile .k { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); font-weight: 600; }
+.tile .v { font-size: 24px; font-weight: 700; line-height: 1.2; margin-top: 2px; }
+.tile .s { font-size: 12px; color: var(--muted); }
+.tile.good { border-left: 4px solid var(--ok); } .tile.bad { border-left: 4px solid var(--untrusted); } .tile.neutral { border-left: 4px solid var(--accent); }
+.vs { align-self: center; font-weight: 700; color: var(--muted); font-size: 13px; }
+#hover { position: absolute; z-index: 5; pointer-events: none; display: none; max-width: 280px; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 8px; padding: 8px 10px; box-shadow: 0 6px 20px rgba(0,0,0,.12); font-size: 12px; }
+#hover b { font-size: 13px; }
+.pill { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px; font-weight: 700; color: #fff; margin: 3px 3px 0 0; }
+.pill.u { background: var(--untrusted); } .pill.p { background: var(--private); } .pill.o { background: var(--out); }
 #graphwrap { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; position: relative; min-height: 360px; }
-#cy { position: absolute; inset: 0; }
-#legend { position: absolute; left: 10px; bottom: 8px; font-size: 12px; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; background: var(--panel); padding: 4px 8px; border-radius: 6px; }
+#cy { position: absolute; inset: 0 0 34px 0; }
+#legend { position: absolute; left: 10px; right: 10px; bottom: 6px; white-space: nowrap; overflow: hidden; font-size: 12px; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; background: var(--panel); padding: 4px 8px; border-radius: 6px; }
 #legend i { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 4px; border-radius: 2px; }
 #graphnote { position: absolute; right: 10px; top: 8px; font-size: 12px; color: var(--muted); background: var(--panel); padding: 2px 6px; border-radius: 6px; }
 #side { overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
@@ -57,7 +69,7 @@ th { color: var(--muted); font-weight: 600; }
 .muted { color: var(--muted); }
 .banner { padding: 8px 10px; border-radius: 8px; margin: 8px 0; font-weight: 600; background: var(--chip); }
 .step { display: grid; grid-template-columns: 26px 1fr auto; gap: 6px; align-items: start; }
-@media (max-width: 860px) { main { grid-template-columns: 1fr; height: auto; } #graphwrap { height: 420px; } }
+@media (max-width: 860px) { body { height: auto; } main { grid-template-columns: 1fr; } #graphwrap { height: 420px; } #strip { grid-template-columns: 1fr; } .vs { display: none; } }
 </style>
 </head>
 <body>
@@ -71,17 +83,23 @@ th { color: var(--muted); font-weight: 600; }
     <button data-tab="gate">3 · Runtime gate</button>
   </nav>
 </header>
+<div id="strip">
+  <div class="tile" id="t1"><div class="k">Per-agent check</div><div class="v">…</div><div class="s"></div></div>
+  <div class="vs">vs</div>
+  <div class="tile" id="t2"><div class="k">Graph check · FalkorDB multi-hop</div><div class="v">…</div><div class="s"></div></div>
+  <div class="tile neutral" id="t3"><div class="k"></div><div class="v"></div><div class="s"></div></div>
+</div>
 <main>
   <div id="graphwrap">
     <div id="cy"></div>
     <div id="graphnote"></div>
+    <div id="hover"></div>
     <div id="legend">
+      <span><span class="pill u">untrusted</span><span class="pill p">private</span><span class="pill o">out</span> capabilities</span>
       <span><i style="background:#8a93a3"></i>instructs</span>
       <span><i style="background:#8a93a3;opacity:.6"></i>reports (free text)</span>
       <span><i style="background:#c9832b"></i>shared store</span>
-      <span><i style="background:var(--untrusted)"></i>untrusted route</span>
-      <span><i style="background:var(--private)"></i>private route</span>
-      <span><i style="background:var(--out)"></i>out route</span>
+      <span>selected flow: <i style="background:var(--untrusted)"></i><i style="background:var(--private)"></i><i style="background:var(--out)"></i></span>
     </div>
   </div>
   <section id="side"></section>
@@ -102,13 +120,35 @@ function capBadges(caps) {
   return [["untrusted_input", "U"], ["private_read", "P"], ["exfil_sink", "S"]].filter(([c]) => caps.includes(c)).map(([, l]) => l).join(" ");
 }
 
+const CAPS = [["untrusted_input", "untrusted", "--untrusted"], ["private_read", "private", "--private"], ["exfil_sink", "out", "--out"]];
+
+// Each node is an SVG card: name on top, one coloured pill per risky capability.
+function nodeCard(n) {
+  const name = n.id, caps = CAPS.filter(([c]) => (n.caps || []).includes(c));
+  const pillW = (t) => t.length * 6.6 + 14;
+  const pillsW = caps.reduce((w, [, t]) => w + pillW(t) + 4, -4);
+  const W = Math.max(110, name.length * 8.4 + 28, pillsW + 24), H = n.kind === "store" ? 52 : 58;
+  let x = (W - Math.max(pillsW, 0)) / 2, pills = "";
+  for (const [, t, v] of caps) {
+    pills += `<rect x="${x}" y="33" width="${pillW(t)}" height="16" rx="8" fill="${css(v)}"/>` +
+             `<text x="${x + pillW(t) / 2}" y="44.5" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">${t}</text>`;
+    x += pillW(t) + 4;
+  }
+  const sub = n.kind === "store" ? `<text x="${W / 2}" y="42" font-size="11" fill="${css("--muted")}" text-anchor="middle">shared store</text>`
+    : caps.length ? pills : `<text x="${W / 2}" y="44" font-size="11" fill="${css("--muted")}" text-anchor="middle">no risky tools</text>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="system-ui, -apple-system, Segoe UI, sans-serif">` +
+    `<text x="${W / 2}" y="22" font-size="14" font-weight="650" fill="${css("--ink")}" text-anchor="middle">${esc(name)}</text>${sub}</svg>`;
+  return { svg: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg), w: W, h: H };
+}
+
 function drawGraph(graph, removed = [], ghosts = []) {
   const els = [];
   for (const n of graph.nodes) {
-    els.push({ data: { id: n.id, label: n.kind === "agent" ? `${n.id}\n${capBadges(n.caps) || "–"}` : n.id, kind: n.kind, purpose: n.purpose } });
+    const c = nodeCard(n);
+    els.push({ data: { id: n.id, kind: n.kind, purpose: n.purpose, caps: n.caps, svg: c.svg, w: c.w, h: c.h } });
   }
   for (const n of ghosts) {
-    if (!graph.nodes.some((m) => m.id === n.id)) els.push({ data: { id: n.id, label: n.id, kind: n.kind, purpose: "removed by the repair" }, classes: "removed" });
+    if (!graph.nodes.some((m) => m.id === n.id)) { const c = nodeCard(n); els.push({ data: { id: n.id, kind: n.kind, purpose: "removed by the repair", caps: n.caps, svg: c.svg, w: c.w, h: c.h }, classes: "removed" }); }
   }
   graph = { nodes: graph.nodes.concat(ghosts.filter((n) => !graph.nodes.some((m) => m.id === n.id))), edges: graph.edges };
   graph.edges.forEach((e, i) => els.push({ data: { id: `e${i}`, source: e.source, target: e.target, type: e.type } }));
@@ -118,30 +158,61 @@ function drawGraph(graph, removed = [], ghosts = []) {
   });
   const roots = graph.nodes.filter((n) => n.kind === "agent" && !graph.edges.some((e) => e.type === "INSTRUCTS" && e.target === n.id)).map((n) => n.id);
   if (cy) cy.destroy();
+  clearInterval(antTimer);
+  $("#hover").style.display = "none";
   cy = cytoscape({
     container: $("#cy"),
     elements: els,
-    layout: { name: "breadthfirst", directed: true, roots, spacingFactor: 1.25, padding: 30 },
+    layout: { name: "breadthfirst", directed: true, roots, spacingFactor: 1.2, padding: 24 },
     style: [
-      { selector: "node", style: { label: "data(label)", "text-wrap": "wrap", "text-valign": "center", color: css("--ink"), "font-size": 13,
-          "background-color": css("--panel"), "border-width": 2, "border-color": "#8a93a3", shape: "round-rectangle", width: 120, height: 48 } },
-      { selector: "node[kind='store']", style: { shape: "barrel", "border-color": "#c9832b", width: 130, height: 40, "font-size": 12 } },
+      { selector: "node", style: { "background-color": css("--panel"), "background-image": "data(svg)", "background-width": "100%", "background-height": "100%",
+          "border-width": 2, "border-color": "#8a93a3", shape: "round-rectangle", width: "data(w)", height: "data(h)" } },
+      { selector: "node[kind='store']", style: { shape: "barrel", "border-color": "#c9832b" } },
       { selector: "edge", style: { "curve-style": "bezier", "target-arrow-shape": "triangle", width: 2, "line-color": "#8a93a3", "target-arrow-color": "#8a93a3", "arrow-scale": 1 } },
       { selector: "edge[type='REPORTS_TO']", style: { "line-style": "dashed", opacity: 0.7 } },
       { selector: "edge[type='WRITES_TO'], edge[type='FEEDS']", style: { "line-color": "#c9832b", "target-arrow-color": "#c9832b", "line-style": "dotted", width: 2.5 } },
       { selector: "edge.removed", style: { "line-color": css("--untrusted"), "target-arrow-color": css("--untrusted"), "line-style": "dashed", opacity: 0.35, label: "removed", "font-size": 10, color: css("--untrusted") } },
       { selector: "node.removed", style: { opacity: 0.35, "border-style": "dashed", "border-color": css("--untrusted") } },
       { selector: ".dim", style: { opacity: 0.18 } },
-      { selector: "edge.hu", style: { "line-color": css("--untrusted"), "target-arrow-color": css("--untrusted"), width: 4.5 } },
-      { selector: "edge.hp", style: { "line-color": css("--private"), "target-arrow-color": css("--private"), width: 4.5 } },
-      { selector: "edge.ho", style: { "line-color": css("--out"), "target-arrow-color": css("--out"), width: 4.5 } },
+      { selector: "edge.hu", style: { "line-color": css("--untrusted"), "target-arrow-color": css("--untrusted"), width: 5, "line-style": "dashed", "line-dash-pattern": [10, 6], opacity: 1 } },
+      { selector: "edge.hp", style: { "line-color": css("--private"), "target-arrow-color": css("--private"), width: 5, "line-style": "dashed", "line-dash-pattern": [10, 6], opacity: 1 } },
+      { selector: "edge.ho", style: { "line-color": css("--out"), "target-arrow-color": css("--out"), width: 5, "line-style": "dashed", "line-dash-pattern": [10, 6], opacity: 1 } },
       { selector: "node.hu", style: { "border-color": css("--untrusted"), "border-width": 3 } },
       { selector: "node.hp", style: { "border-color": css("--private"), "border-width": 3 } },
       { selector: "node.ho", style: { "border-color": css("--out"), "border-width": 3 } },
       { selector: "node.meet", style: { "border-width": 5, "border-style": "double" } },
     ],
   });
-  cy.on("mouseover", "node", (e) => { $("#graphnote").textContent = e.target.data("purpose") || e.target.id(); });
+  cy.on("mouseover", "node", (e) => showHover(e.target));
+  cy.on("mouseout", "node", () => { $("#hover").style.display = "none"; });
+  cy.on("pan zoom", () => { $("#hover").style.display = "none"; });
+}
+
+function showHover(node) {
+  const d = node.data(), caps = CAPS.filter(([c]) => (d.caps || []).includes(c));
+  const flows = (state.scan && state.scan.flows) || [];
+  const inFlows = flows.filter((f) => [f.routes.untrusted, f.routes.private, f.routes.out].some((r) => (r || []).includes(d.id))).length;
+  $("#hover").innerHTML = `<b>${esc(d.id)}</b> <span class="muted">${d.kind}</span>
+    ${d.purpose ? `<div style="margin-top:3px">${esc(d.purpose)}</div>` : ""}
+    <div>${caps.map(([, t]) => `<span class="pill ${t[0]}">${t}</span>`).join("") || (d.kind === "agent" ? '<span class="muted">no risky tools</span>' : "")}</div>
+    ${flows.length ? `<div class="muted" style="margin-top:4px">on the route of ${inFlows} of ${flows.length} flows</div>` : ""}`;
+  const p = node.renderedPosition(), wrap = $("#graphwrap").getBoundingClientRect(), h = $("#hover");
+  h.style.display = "block";
+  const left = Math.min(p.x + node.renderedWidth() / 2 + 10, wrap.width - h.offsetWidth - 8);
+  h.style.left = `${Math.max(8, left)}px`;
+  h.style.top = `${Math.max(8, Math.min(p.y - 20, wrap.height - h.offsetHeight - 8))}px`;
+}
+
+// Selected routes "march" toward their target so the direction of the leak is visible.
+let antTimer = null;
+function marchAnts() {
+  clearInterval(antTimer);
+  let off = 0;
+  antTimer = setInterval(() => {
+    if (!cy) return;
+    off = (off - 2) % 160;
+    cy.edges(".hu, .hp, .ho").style("line-dash-offset", off);
+  }, 50);
 }
 
 function highlight(routes, meet) {
@@ -155,8 +226,29 @@ function highlight(routes, meet) {
   };
   mark(routes.untrusted, "hu"); mark(routes.private, "hp"); mark(routes.out, "ho");
   if (meet) cy.getElementById(meet).addClass("meet");
+  marchAnts();
 }
-function clearHighlight() { if (cy) cy.elements().removeClass("dim hu hp ho meet"); }
+function clearHighlight() { clearInterval(antTimer); if (cy) cy.elements().removeClass("dim hu hp ho meet"); }
+
+// ------------------------------------------------------------------ headline strip
+function tile(id, cls, k, v, sub) {
+  const t = $(id);
+  t.className = `tile ${cls}`;
+  if (k !== null) t.querySelector(".k").textContent = k;
+  t.querySelector(".v").innerHTML = v;
+  t.querySelector(".s").textContent = sub;
+}
+function stripFromScan(d) {
+  const agents = Object.keys(d.one_hop.per_agent), bad = d.one_hop.agents_toxic_on_their_own.length;
+  tile("#t1", bad ? "bad" : "good", null, `${agents.length - bad} / ${agents.length} look safe`, "reviewing one agent at a time");
+  const toxic = d.flows.filter((f) => f.status === "TOXIC"), unknown = d.flows.length - toxic.length;
+  const hops = toxic.map((f) => f.hops);
+  tile("#t2", toxic.length ? "bad" : unknown ? "neutral" : "good", null,
+    `${toxic.length} toxic flow${toxic.length === 1 ? "" : "s"}${unknown ? ` · ${unknown} unknown` : ""}`,
+    toxic.length ? (Math.max(...hops) === 0 ? "all three capabilities inside a single agent"
+      : `${Math.min(...hops) === Math.max(...hops) ? hops[0] : `${Math.min(...hops)}–${Math.max(...hops)}`} hops across delegation and shared stores`)
+    : unknown ? "they depend on an unlabelled tool: UNKNOWN, never reported as safe" : "no path from untrusted + private to an outbound tool");
+}
 
 const routeHtml = (r) => `
   <div class="route"><span class="r-u">untrusted</span> ${esc((r.untrusted || []).join(" → "))}</div>
@@ -170,7 +262,9 @@ async function showScan() {
   $("#side").innerHTML = `<p class="muted">Loading ${esc(sc)}…</p>`;
   const d = state.scan = await api(`/api/${sc}/scan`);
   drawGraph(d.graph);
-  $("#graphnote").textContent = "U untrusted input · P private read · S outbound sink";
+  stripFromScan(d);
+  tile("#t3", "neutral", "Next", "Click a flow", "its untrusted, private and outbound routes light up on the graph");
+  $("#graphnote").textContent = "hover a node for details";
   const per = d.one_hop.per_agent;
   const rows = Object.keys(per).map((a) => {
     const has = (c) => per[a].includes(c) ? "●" : "·";
@@ -205,9 +299,25 @@ async function showScan() {
 async function showRepair() {
   const sc = $("#scenario").value;
   $("#side").innerHTML = `<p class="muted">Searching repairs on graph copies…</p>`;
-  const [scan, d] = await Promise.all([state.scan && state.scan.sc === sc ? state.scan : api(`/api/${sc}/scan`), api(`/api/${sc}/repair`)]);
+  // Sequential: both endpoints reload the same scenario graph, and concurrent reloads race on index creation.
+  const scan = state.scan && state.scan.sc === sc ? state.scan : await api(`/api/${sc}/scan`);
+  const d = await api(`/api/${sc}/repair`);
   scan.sc = sc; state.scan = scan;
   drawGraph(scan.graph);
+  stripFromScan(scan);
+  const toxicNow = scan.flows.filter((f) => f.status === "TOXIC").length;
+  if (!toxicNow) {
+    const unk = scan.flows.length;
+    tile("#t3", unk ? "neutral" : "good", "Cheapest repair (graph search)", unk ? "nothing proven toxic" : "nothing to repair",
+      unk ? `${unk} unknown flows: label the tool first; the gate fails closed meanwhile` : "no toxic flows");
+  } else if (d.repairs.length) {
+    const r = d.repairs[0], after = d.after;
+    tile("#t3", "good", "Cheapest repair (graph search)", `cost ${r.cost} → ${after ? after.flows_left.length : "?"} flows`,
+      `${after ? Object.keys(after.broken_tasks).length : "?"} tasks broken · ${d.rejected_single_actions.length} single fixes rejected`);
+  } else {
+    tile("#t3", "bad", "Cheapest repair (graph search)", "none keeps every task", "a human decides; the runtime gate protects meanwhile");
+  }
+  $("#graphnote").textContent = "hover a node for details";
   const rejected = d.rejected_single_actions.map((r) => `<tr><td>${esc(r.action)}</td><td class="bad">${esc(r.reason)}</td></tr>`).join("");
   const sols = d.repairs.map((r, i) => `<div class="card" data-i="${i}"><span class="chip good">cost ${r.cost}</span> ${esc(r.describe.join("; "))}</div>`).join("");
   $("#side").innerHTML = `
@@ -242,6 +352,9 @@ async function showGate() {
   const sc = state.scenarios.find((s) => s.name === $("#scenario").value);
   if (!state.scan || state.scan.sc !== sc.name) { state.scan = await api(`/api/${sc.name}/scan`); state.scan.sc = sc.name; }
   drawGraph(state.scan.graph);
+  stripFromScan(state.scan);
+  $("#graphnote").textContent = "hover a node for details";
+  tile("#t3", "neutral", "Runtime gate", "…", "");
   if (!sc.attacks.length) { $("#side").innerHTML = `<p class="muted">No scripted attack for this scenario.</p>`; return; }
   $("#side").innerHTML = `
     <h2>Runtime gate</h2>
@@ -264,6 +377,9 @@ async function showGate() {
       ? `<div class="banner bad">Secret left through ${esc(r.leaked_via.join(", "))}</div>`
       : `<div class="banner good">The secret did not leave. ${r.blocked} blocked, ${r.unreachable} impossible.</div>`;
     $("#replay").innerHTML = `${r.repair.length ? `<p class="muted">Repair applied: ${esc(r.repair.join("; "))}</p>` : ""}${banner}${steps}`;
+    const label = { nogate: "No gate", gate: "Gate on", after: "After repair" }[mode];
+    if (r.leaked_via.length) tile("#t3", "bad", `Runtime gate · ${label}`, `secret leaked ${r.leaked_via.length}×`, `via ${r.leaked_via.join(", ")}`);
+    else tile("#t3", "good", `Runtime gate · ${label}`, "secret stayed in", `${r.blocked} blocked · ${r.unreachable} impossible`);
     document.querySelectorAll("#replay .card").forEach((c) => c.onclick = () => {
       const s = r.steps[+c.dataset.i];
       if (s.routes && s.routes.out) highlight(s.routes, s.routes.out[0]); else clearHighlight();
